@@ -32,7 +32,7 @@ class Renderer():
         screen2 = screen.convert_alpha()
         width, height = (min_width * rate, min_width)
         util.init(width, height)
-        pygame.display.set_caption('Phygros 1.5')
+        pygame.display.set_caption('Phygros')
         pygame.mixer.music.load(self.music)
         music_on = False
         pause = False

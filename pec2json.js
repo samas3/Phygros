@@ -840,8 +840,17 @@ function info(text) {
 }
 
 var fs = require('fs');
-fs.readFile('chart.json', 'utf-8', (err, data) => {
-	let res = parseRPE(data);
-	fs.writeFile('out.json', res.data, err => {});
-	console.log(res.messages);
-});
+let type = 1;
+if(type == 1){
+	fs.readFile('chart.json', 'utf-8', (err, data) => {
+		let res = parseRPE(data);
+		fs.writeFile('out.json', res.data, err => {});
+		console.log(res.messages);
+	});
+}else{
+	fs.readFile('chart.pec', 'utf-8', (err, data) => {
+		let res = parse(data);
+		fs.writeFile('out.json', res.data, err => {});
+		console.log(res.messages);
+	});
+}
