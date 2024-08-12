@@ -2,6 +2,7 @@ import math
 w = 0
 h = 0
 TEXT_COLOR = (200, 200, 200, 200)
+LINE_COLOR = (254, 255, 169)
 def init(w_, h_):
     global w, h
     w = w_
@@ -59,3 +60,5 @@ def calcNotePos(note, yDist, fv):
     linePos[0] += x / math.cos(math.radians(note.deg)) + (y - x * math.tan(math.radians(note.deg))) * math.sin(math.radians(note.deg))
     linePos = toPygamePos(*linePos)
     return linePos
+def onScreen(x, y):
+    return inrng(x, 0, w) and inrng(y, 0, h)

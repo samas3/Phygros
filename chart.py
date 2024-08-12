@@ -2,6 +2,7 @@ import json
 import line
 import util
 import pygame
+import judge
 class Chart():
     def __init__(self, chart, info={}, options={}):
         chart = json.load(open(chart))
@@ -9,37 +10,24 @@ class Chart():
         self.fv = int(chart['formatVersion'])
         self.offset = float(chart['offset'])
         self.lines = []
+        self.all_notes = []
         for i, j in enumerate(chart['judgeLineList']):
             self.lines.append(line.Line(j, i))
-        self.all_notes = []
         for i in self.lines:
+            i = number_notes(i)
             self.all_notes += i.notesAbove + i.notesBelow
             for j, k in enumerate(i.speedEvents):
                 if j == 0:
                     i.speedEvents[j].floorPosition = 0
                 else:
                     i.speedEvents[j].floorPosition = i.speedEvents[j - 1].floorPosition + i.speedEvents[j - 1].value * (k.startTime - i.speedEvents[j - 1].startTime) * 1.875 / i.bpm
-        self.all_notes.sort(key=lambda x: x.time)
-        id = 0
-        for i in self.all_notes:
-            for j in self.lines:
-                for k in j.notesAbove:
-                    if i.time == k.time:
-                        k.id = id
-                        id += 1
-                for k in j.notesBelow:
-                    if i.time == k.time:
-                        k.id = id
-                        id += 1
+        self.all_notes.sort(key=lambda x: x.time + x.holdTime)
+        self.jm = judge.JudgeManager(self.all_notes)
         self.check_line()
+        self.highlight()
         self.name = info.get('name', 'Untitled')
         self.lvl = info.get('lvl', 'SP Lv.?')
         self.numOfNotes = self.notes()
-    def scored(self):
-        res = 0
-        for i in self.lines:
-            res += i.scored()
-        return res
     def print(self, str):
         if 'printlog' in self.options:
             print(str)
@@ -95,9 +83,15 @@ class Chart():
             cnt += i.notes()
         self.notes = cnt
         return self.notes
+    def highlight(self):
+        for i in self.lines:
+            for j in i.notesAbove:
+                j.find_near(self)
+            for j in i.notesBelow:
+                j.find_near(self)
     def render(self, time, screen, options):
         for i in self.lines:
-            i.render(time, screen, (254, 255, 169), self.fv, options)
+            i.render(time, screen, util.LINE_COLOR, self.fv, options)
         # 后渲染界面，要不然会被挡
         font = pygame.font.Font('font.ttf', 25)
         combo_font = pygame.font.Font('font.ttf', 20)
@@ -107,9 +101,23 @@ class Chart():
         width, height = screen.get_size()
         screen.blit(name, (10, height - 30))
         screen.blit(lvl, (width - lvl.get_width() - 10, height - 30))
-        combo_num = combo_font2.render(str(self.scored()), False, util.TEXT_COLOR)
-        screen.blit(combo_num, (width / 2 - combo_num.get_width() / 2, 0))
+        self.jm.check(screen, time)
+        combo_num = combo_font2.render(str(self.jm.combo), False, util.TEXT_COLOR)
         combo_text = combo_font.render('AUTOPLAY', False, util.TEXT_COLOR)
-        screen.blit(combo_text, (width / 2 - combo_text.get_width() / 2, 40))
-        score_num = combo_font2.render(str(round(self.scored() / self.notes * 1e6)).zfill(7), False, util.TEXT_COLOR)
+        if self.jm.combo > 2:
+            screen.blit(combo_num, (width / 2 - combo_num.get_width() / 2, 0))
+            screen.blit(combo_text, (width / 2 - combo_text.get_width() / 2, 40))
+        score_num = combo_font2.render(str(round(self.jm.combo / self.notes * 1e6)).zfill(7), False, util.TEXT_COLOR)
         screen.blit(score_num, (width - score_num.get_width() - 10, 10))
+def number_notes(line):
+    line.notesAbove.sort(key=lambda x: x.time)
+    line.notesBelow.sort(key=lambda x: x.time)
+    for i, j in enumerate(line.notesAbove):
+        j.id = i
+    for i, j in enumerate(line.notesBelow):
+        j.id = i
+    line.speedEvents.sort(key=lambda x: x.startTime)
+    line.disappearEvents.sort(key=lambda x: x.startTime)
+    line.moveEvents.sort(key=lambda x: x.startTime)
+    line.rotateEvents.sort(key=lambda x: x.startTime)
+    return line

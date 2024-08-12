@@ -3,8 +3,8 @@ import chart as ch
 import time
 import util
 import json
+import os
 from tinytag import TinyTag
-from io import BytesIO
 from PIL import Image, ImageFilter
 def get_duration(file_path):
     tag = TinyTag.get(file_path)
@@ -12,7 +12,10 @@ def get_duration(file_path):
     return duration
 class Renderer():
     def __init__(self, chart, music, bg, info, options=''):
-        self.info = json.load(open(info, encoding='utf-8'))
+        if os.path.isfile(info):
+            self.info = json.load(open(info, encoding='utf-8'))
+        else:
+            self.info = {'name': 'Untitled', 'lvl': 'SP Lv.?'}
         self.music = music
         self.bg = bg
         self.options = util.parse(options)
@@ -64,6 +67,8 @@ class Renderer():
             else:
                 if self.bg:
                     screen2.blit(bg, (0, 0))
+                else:
+                    screen2.fill((0, 0, 0))
                 if tm >= 3 or 'notrans' in self.options:
                     if not music_on:
                         pygame.mixer.music.play(1)
@@ -71,6 +76,8 @@ class Renderer():
                     tm2 = tm - 3
                     if 'notrans' in self.options:
                         tm2 += 3
+                    if 'begin' in self.options:
+                        tm2 += float(self.options['begin'])
                     if 'speed' in self.options:
                         tm2 *= float(self.options['speed'])
                     self.chart.render(tm2, screen2, self.options)
@@ -88,9 +95,12 @@ class Renderer():
                     lvl_text = font.render(lvl, False, util.TEXT_COLOR)
                     screen2.blit(name_text, (width / 2 - name_text.get_width() / 2, height / 2 - 90))
                     screen2.blit(lvl_text, (width / 2 - lvl_text.get_width() / 2, height / 2 - 50))
-                    pygame.draw.line(screen2, (254, 255, 169), (width / 2 * (1 - tm2 / 3), height / 2), (width / 2 * (1 + tm2 / 3), height / 2), int(0.0075 * height))
+                    pygame.draw.line(screen2, util.LINE_COLOR, (width / 2 * (1 - tm2 / 3), height / 2), (width / 2 * (1 + tm2 / 3), height / 2), int(0.0075 * height))
                 screen.blit(screen2, (0, 0))
                 pygame.display.flip()
                 clock.tick(float(self.options['maxfps']) if 'maxfps' in self.options else 60)
                 continue
             break
+if __name__ == '__main__':
+    name = '1'
+    Renderer(f'{name}.json', f'{name}.wav', f'{name}.png', '', 'notrans').play()
