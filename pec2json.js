@@ -61,7 +61,7 @@ class LinePec {
 	}
 	format() {
 		const sortFn = (a, b) => a.time - b.time;
-		const sortFn2 = (a, b) => (a.startTime - b.startTime) + (a.endTime - b.endTime); //²»µ¥¶ÀÅĞ¶ÏÒÔ±ÜÃâÎó²î
+		const sortFn2 = (a, b) => (a.startTime - b.startTime) + (a.endTime - b.endTime); //ä¸å•ç‹¬åˆ¤æ–­ä»¥é¿å…è¯¯å·®
 		const result = {
 			bpm: this.bpm,
 			speedEvents: [],
@@ -83,7 +83,7 @@ class LinePec {
 		const pushRotateEvent = (startTime, endTime, start, end) => {
 			result.judgeLineRotateEvents.push({ startTime, endTime, start, end, start2: 0, end2: 0 });
 		};
-		//cvºÍfloorPositionÒ»²¢´¦Àí
+		//cvå’ŒfloorPositionä¸€å¹¶å¤„ç†
 		const cvp = this.speedEvents.sort(sortFn);
 		let s1 = 0;
 		for (let i = 0; i < cvp.length; i++) {
@@ -127,7 +127,7 @@ class LinePec {
 				result.numOfNotesBelow++;
 			}
 		}
-		//ÕûºÏmotionType
+		//æ•´åˆmotionType
 		let dt = 0;
 		let d1 = 0;
 		for (const e of this.alphaEvents.sort(sortFn2)) {
@@ -193,24 +193,24 @@ class LinePec {
 }
 /**
  * @typedef {object} BpmEvent
- * @property {number} start ¿ªÊ¼ÅÄÊı
- * @property {number} end ½áÊøÅÄÊı
- * @property {number} bpm BPMÖµ
- * @property {number} value ÀÛ»ı¾ø¶ÔÊ±¼ä(min)
+ * @property {number} start å¼€å§‹æ‹æ•°
+ * @property {number} end ç»“æŸæ‹æ•°
+ * @property {number} bpm BPMå€¼
+ * @property {number} value ç´¯ç§¯ç»å¯¹æ—¶é—´(min)
  */
 class BpmList {
 	constructor(baseBpm) {
 		this.baseBpm = Number(baseBpm) || 120;
 		this.accTime = 0;
 		/** @type {BpmEvent[]} */
-		this.list = []; //´æ·Åbpm±äËÙÊÂ¼ş
+		this.list = []; //å­˜æ”¾bpmå˜é€Ÿäº‹ä»¶
 	}
 	push(start, end, bpm) {
 		const value = this.accTime;
 		this.list.push({ start, end, bpm, value });
 		this.accTime += (end - start) / bpm;
 	}
-	calc(beat) { //½«pecÊ±¼ä×ª»»ÎªpgrÊ±¼ä
+	calc(beat) { //å°†pecæ—¶é—´è½¬æ¢ä¸ºpgræ—¶é—´
 		let time = 0;
 		for (const i of this.list) {
 			if (beat > i.end) continue;
@@ -225,7 +225,7 @@ class BpmList {
  * @param {string} filename 
  */
 function parse(pec, filename) {
-	const data = pec.split(/\s+/); //ÇĞ·ÖpecÎÄ±¾
+	const data = pec.split(/\s+/); //åˆ‡åˆ†pecæ–‡æœ¬
 	const data2 = { offset: 0, bpmList: [], notes: [], lines: [] };
 	const result = { formatVersion: 3, offset: 0, numOfNotes: 0, judgeLineList: [] };
 	const warnings = []; //
@@ -272,15 +272,15 @@ function parse(pec, filename) {
 			data2.lines.push(cmd);
 		} else throw new Error('Unexpected Command: ' + command);
 	}
-	result.offset = data2.offset / 1e3 - 0.175; //v18x¹Ì¶¨ÑÓ³Ù
-	//bpm±äËÙ
+	result.offset = data2.offset / 1e3 - 0.175; //v18xå›ºå®šå»¶è¿Ÿ
+	//bpmå˜é€Ÿ
 	if (!data2.bpmList.length) throw new Error('Invalid pec file');
 	const bpmList = new BpmList(data2.bpmList[0].bpm); //qwq
 	data2.bpmList.sort((a, b) => a.time - b.time).forEach((i, idx, arr) => {
-		if (arr[idx + 1] && arr[idx + 1].time <= 0) return; //¹ıÂË¸ºÊı
+		if (arr[idx + 1] && arr[idx + 1].time <= 0) return; //è¿‡æ»¤è´Ÿæ•°
 		bpmList.push(i.time < 0 ? 0 : i.time, arr[idx + 1] ? arr[idx + 1].time : 1e9, i.bpm);
 	});
-	//noteºÍÅĞ¶¨ÏßÊÂ¼ş
+	//noteå’Œåˆ¤å®šçº¿äº‹ä»¶
 	const linesPec = [];
 	for (const i of data2.notes) {
 		const type = [0, 1, 4, 2, 3].indexOf(i.type);
@@ -289,37 +289,37 @@ function parse(pec, filename) {
 		const speed = isNaN(i.speed) ? 1 : i.speed;
 		if (!linesPec[i.lineId]) linesPec[i.lineId] = new LinePec(bpmList.baseBpm);
 		linesPec[i.lineId].pushNote(type, time, i.offsetX / 115.2, holdTime, speed, i.isAbove === 1, i.isFake !== 0); //102.4
-		// if (i.isAbove !== 1 && i.isAbove !== 2) warnings.push(`¼ì²âµ½·Ç·¨·½Ïò:${i.isAbove}(½«±»ÊÓÎª2)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
-		if (i.isFake !== 0) warnings.push(`¼ì²âµ½FakeNote(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
-		if (i.size !== 1) warnings.push(`¼ì²âµ½Òì³£Note(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
+		// if (i.isAbove !== 1 && i.isAbove !== 2) warnings.push(`æ£€æµ‹åˆ°éæ³•æ–¹å‘:${i.isAbove}(å°†è¢«è§†ä¸º2)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
+		if (i.isFake !== 0) warnings.push(`æ£€æµ‹åˆ°FakeNote(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
+		if (i.size !== 1) warnings.push(`æ£€æµ‹åˆ°å¼‚å¸¸Note(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
 	}
 	const isMotion = i => tween[i] || i === 1;
 	for (const i of data2.lines) {
 		const t1 = bpmList.calc(i.time);
 		const t2 = bpmList.calc(i.time2);
 		if (t1 > t2) {
-			warnings.push(`¼ì²âµ½¿ªÊ¼Ê±¼ä´óÓÚ½áÊøÊ±¼ä(½«½ûÓÃ´ËÊÂ¼ş)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
+			warnings.push(`æ£€æµ‹åˆ°å¼€å§‹æ—¶é—´å¤§äºç»“æŸæ—¶é—´(å°†ç¦ç”¨æ­¤äº‹ä»¶)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
 			continue;
 		}
 		if (!linesPec[i.lineId]) linesPec[i.lineId] = new LinePec(bpmList.baseBpm);
-		//±äËÙ
+		//å˜é€Ÿ
 		if (i.type === 'v') {
 			linesPec[i.lineId].pushSpeedEvent(t1, i.speed / 7.0); //6.0??
 		}
-		//²»Í¸Ã÷¶È
+		//ä¸é€æ˜åº¦
 		if (i.type === 'a' || i.type === 'f') {
-			linesPec[i.lineId].pushAlphaEvent(t1, t2, Math.max(i.alpha / 255, 0), i.motionType); //Ôİ²»Ö§³ÖalphaÖµÀ©Õ¹
-			if (i.alpha < 0) warnings.push(`¼ì²âµ½¸ºÊıAlpha:${i.alpha}(½«±»ÊÓÎª0)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
+			linesPec[i.lineId].pushAlphaEvent(t1, t2, Math.max(i.alpha / 255, 0), i.motionType); //æš‚ä¸æ”¯æŒalphaå€¼æ‰©å±•
+			if (i.alpha < 0) warnings.push(`æ£€æµ‹åˆ°è´Ÿæ•°Alpha:${i.alpha}(å°†è¢«è§†ä¸º0)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
 		}
-		//ÒÆ¶¯
+		//ç§»åŠ¨
 		if (i.type === 'p' || i.type === 'm') {
 			linesPec[i.lineId].pushMoveEvent(t1, t2, i.offsetX / 2048, i.offsetY / 1400, isMotion(i.motionType) ? i.motionType : 1);
-			if (!isMotion(i.motionType)) warnings.push(`Î´ÖªµÄ»º¶¯ÀàĞÍ:${i.motionType}(½«±»ÊÓÎª1)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
+			if (!isMotion(i.motionType)) warnings.push(`æœªçŸ¥çš„ç¼“åŠ¨ç±»å‹:${i.motionType}(å°†è¢«è§†ä¸º1)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
 		}
-		//Ğı×ª
+		//æ—‹è½¬
 		if (i.type === 'd' || i.type === 'r') {
 			linesPec[i.lineId].pushRotateEvent(t1, t2, -i.rotation, isMotion(i.motionType) ? i.motionType : 1);
-			if (!isMotion(i.motionType)) warnings.push(`Î´ÖªµÄ»º¶¯ÀàĞÍ:${i.motionType}(½«±»ÊÓÎª1)\nÎ»ÓÚ:"${i.text}"\nÀ´×Ô${filename}`);
+			if (!isMotion(i.motionType)) warnings.push(`æœªçŸ¥çš„ç¼“åŠ¨ç±»å‹:${i.motionType}(å°†è¢«è§†ä¸º1)\nä½äº:"${i.text}"\næ¥è‡ª${filename}`);
 		}
 	}
 	for (const i of linesPec) {
@@ -346,18 +346,18 @@ function parse(pec, filename) {
 function pushLineEvent(ls, le) {
 	const { startTime, endTime, start, end, easingType = 1, easingLeft = 0, easingRight = 1 } = le;
 	const delta = (end - start) / (endTime - startTime);
-	//²åÈëÖ®Ç°¿¼ÂÇÊÂ¼şÊ±¼äµÄÏà»¥¹ØÏµ
+	//æ’å…¥ä¹‹å‰è€ƒè™‘äº‹ä»¶æ—¶é—´çš„ç›¸äº’å…³ç³»
 	for (let i = ls.length - 1; i >= 0; i--) {
 		const e = ls[i];
-		if (e.endTime < startTime) { //ÏàÀë£º²¹È«¿ÕÏ¶
+		if (e.endTime < startTime) { //ç›¸ç¦»ï¼šè¡¥å…¨ç©ºéš™
 			ls[i + 1] = { startTime: e.endTime, endTime: startTime, start: e.end, end: e.end, delta: 0 };
 			break;
 		}
-		if (e.startTime === startTime) { //ÏàÇĞ£ºÖ±½Ó½Ø¶Ï
+		if (e.startTime === startTime) { //ç›¸åˆ‡ï¼šç›´æ¥æˆªæ–­
 			ls.length = i;
 			break;
 		}
-		if (e.startTime < startTime) { //Ïà½»£º½Ø¶Ï½»µãÒÔºóµÄ²¿·Ö
+		if (e.startTime < startTime) { //ç›¸äº¤ï¼šæˆªæ–­äº¤ç‚¹ä»¥åçš„éƒ¨åˆ†
 			e.end = e.start + (startTime - e.startTime) * e.delta;
 			e.endTime = startTime;
 			e.delta = (e.end - e.start) / (startTime - e.startTime);
@@ -365,9 +365,9 @@ function pushLineEvent(ls, le) {
 			break;
 		}
 	}
-	//²åÈëĞÂÊÂ¼ş
+	//æ’å…¥æ–°äº‹ä»¶
 	if (easingType === 1 || start === end) ls.push({ startTime, endTime, start, end, delta });
-	else { //ÔİÎ´¿¼ÂÇ¿ªÊ¼Ê±¼ä´óÓÚ½áÊøÊ±¼äµÄÇé¿ö
+	else { //æš‚æœªè€ƒè™‘å¼€å§‹æ—¶é—´å¤§äºç»“æŸæ—¶é—´çš„æƒ…å†µ
 		const eHead = tween[easingType](easingLeft);
 		const eTail = tween[easingType](easingRight);
 		const eSpeed = (easingRight - easingLeft) / (endTime - startTime);
@@ -387,7 +387,7 @@ function toSpeedEvent(le) {
 	for (const i of le) {
 		const { startTime, endTime, start, end } = i;
 		result.push({ time: startTime, value: start });
-		if (start !== end) { //ÔİÎ´¿¼ÂÇ¿ªÊ¼Ê±¼ä´óÓÚ½áÊøÊ±¼äµÄÇé¿ö
+		if (start !== end) { //æš‚æœªè€ƒè™‘å¼€å§‹æ—¶é—´å¤§äºç»“æŸæ—¶é—´çš„æƒ…å†µ
 			const t1 = (end - start) / (endTime - startTime);
 			for (let j = startTime; j < endTime; j++) {
 				const x = j + 1 - startTime;
@@ -506,15 +506,15 @@ function mergeFather(child, father) {
 		const startTime = i;
 		const endTime = i + 1;
 		if (startTime === endTime) continue;
-		//¼ÆËã¸¸¼¶ÒÆ¶¯ºÍĞı×ª
+		//è®¡ç®—çˆ¶çº§ç§»åŠ¨å’Œæ—‹è½¬
 		const [fatherX, fatherY] = getMoveValue(father.moveEvents, startTime, false);
 		const fatherR = getRotateValue(father.rotateEvents, startTime, false) * -Math.PI / 180;
 		const [fatherX2, fatherY2] = getMoveValue(father.moveEvents, endTime, true);
 		const fatherR2 = getRotateValue(father.rotateEvents, endTime, true) * -Math.PI / 180;
-		//¼ÆËã×Ó¼¶ÒÆ¶¯
+		//è®¡ç®—å­çº§ç§»åŠ¨
 		const [childX, childY] = getMoveValue(child.moveEvents, startTime, false);
 		const [childX2, childY2] = getMoveValue(child.moveEvents, endTime, true);
-		//×ø±ê×ª»»
+		//åæ ‡è½¬æ¢
 		const start = fatherX + childX * Math.cos(fatherR) - childY * Math.sin(fatherR);
 		const end = fatherX2 + childX2 * Math.cos(fatherR2) - childY2 * Math.sin(fatherR2);
 		const start2 = fatherY + childX * Math.sin(fatherR) + childY * Math.cos(fatherR);
@@ -591,7 +591,7 @@ class LineRPE {
 	fitFather(stack = [], onwarning = console.warn) {
 		if (!this.settled) this.preset();
 		if (stack.includes(this)) {
-			onwarning(`¼ì²âµ½Ñ­»·¼Ì³Ğ£º${stack.concat(this).map(i => i.id).join('->')}(¶ÔÓ¦µÄfather½«±»ÊÓÎª-1)`);
+			onwarning(`æ£€æµ‹åˆ°å¾ªç¯ç»§æ‰¿ï¼š${stack.concat(this).map(i => i.id).join('->')}(å¯¹åº”çš„fatherå°†è¢«è§†ä¸º-1)`);
 			stack.map(i => i.setFather(null));
 			return;
 		}
@@ -640,7 +640,7 @@ class LineRPE {
 			start2: 0,
 			end2: 0
 		});
-		//Ìí¼ÓfloorPosition
+		//æ·»åŠ floorPosition
 		let floorPos = 0;
 		const speedEvents = this.speedEvents;
 		for (let i = 0; i < speedEvents.length; i++) {
@@ -652,7 +652,7 @@ class LineRPE {
 			floorPos = Math.fround(floorPos);
 			result.speedEvents.push({ startTime, endTime, value, floorPosition });
 		}
-		//´¦Àínotes
+		//å¤„ç†notes
 		const sortFn = (a, b) => a.time - b.time;
 		for (const i of this.notes.sort(sortFn)) {
 			const time = i.time;
@@ -696,8 +696,8 @@ function parseRPE(pec, filename) {
 	if (!meta && !meta.RPEVersion) throw new Error('Invalid rpe file');
 	const result = { formatVersion: 3, offset: 0, numOfNotes: 0, judgeLineList: [] };
 	const warnings = [];
-	warnings.push(`RPEÆ×Ãæ¼æÈİ½¨ÉèÖĞ...\n¼ì²âµ½RPE°æ±¾:${meta.RPEVersion}\nÀ´×Ô${filename}`);
-	//Æ×ÃæĞÅÏ¢
+	warnings.push(`RPEè°±é¢å…¼å®¹å»ºè®¾ä¸­...\næ£€æµ‹åˆ°RPEç‰ˆæœ¬:${meta.RPEVersion}\næ¥è‡ª${filename}`);
+	//è°±é¢ä¿¡æ¯
 	const info = {};
 	info.Chart = filename;
 	info.Music = meta.song;
@@ -707,7 +707,7 @@ function parseRPE(pec, filename) {
 	info.Charter = meta.charter;
 	info.Level = meta.level;
 	result.offset = meta.offset / 1e3;
-	//ÅĞ¶¨ÏßÌùÍ¼
+	//åˆ¤å®šçº¿è´´å›¾
 	const line = [];
 	data.judgeLineList.forEach((i, index) => {
 		i.LineId = index;
@@ -727,31 +727,31 @@ function parseRPE(pec, filename) {
 			UseLineScale: 1,
 		});
 	});
-	//bpm±äËÙ
+	//bpmå˜é€Ÿ
 	const bpmList = new BpmList(data.BPMList[0].bpm);
 	for (const i of data.BPMList) i.time = i.startTime[0] + i.startTime[1] / i.startTime[2];
 	data.BPMList.sort((a, b) => a.time - b.time).forEach((i, idx, arr) => {
-		if (arr[idx + 1] && arr[idx + 1].time <= 0) return; //¹ıÂË¸ºÊı
+		if (arr[idx + 1] && arr[idx + 1].time <= 0) return; //è¿‡æ»¤è´Ÿæ•°
 		bpmList.push(i.time < 0 ? 0 : i.time, arr[idx + 1] ? arr[idx + 1].time : 1e9, i.bpm);
 	});
 	for (const i of data.judgeLineList) {
 		if (i.zOrder === undefined) i.zOrder = 0;
 		if (i.bpmfactor === undefined) i.bpmfactor = 1;
 		if (i.father === undefined) i.father = -1;
-		if (i.isCover !== 1) warnings.push(`Î´¼æÈİisCover=${i.isCover}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ${i.LineId}ºÅÅĞ¶¨Ïß\nÀ´×Ô${filename}`);
-		if (i.zOrder !== 0) warnings.push(`Î´¼æÈİzOrder=${i.zOrder}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ${i.LineId}ºÅÅĞ¶¨Ïß\nÀ´×Ô${filename}`);
-		if (i.bpmfactor !== 1) warnings.push(`Î´¼æÈİbpmfactor=${i.bpmfactor}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ${i.LineId}ºÅÅĞ¶¨Ïß\nÀ´×Ô${filename}`);
+		if (i.isCover !== 1) warnings.push(`æœªå…¼å®¹isCover=${i.isCover}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº${i.LineId}å·åˆ¤å®šçº¿\næ¥è‡ª${filename}`);
+		if (i.zOrder !== 0) warnings.push(`æœªå…¼å®¹zOrder=${i.zOrder}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº${i.LineId}å·åˆ¤å®šçº¿\næ¥è‡ª${filename}`);
+		if (i.bpmfactor !== 1) warnings.push(`æœªå…¼å®¹bpmfactor=${i.bpmfactor}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº${i.LineId}å·åˆ¤å®šçº¿\næ¥è‡ª${filename}`);
 		const lineRPE = new LineRPE(bpmList.baseBpm);
 		lineRPE.setId(i.LineId);
 		if (i.notes) {
 			for (const note of i.notes) {
 				if (note.alpha === undefined) note.alpha = 255;
-				// if (note.above !== 1 && note.above !== 2) warnings.push(`¼ì²âµ½·Ç·¨·½Ïò:${note.above}(½«±»ÊÓÎª2)\nÎ»ÓÚ:"${JSON.stringify(note)}"\nÀ´×Ô${filename}`);
-				if (note.isFake !== 0) warnings.push(`¼ì²âµ½FakeNote(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(note)}"\nÀ´×Ô${filename}`);
-				if (note.size !== 1) warnings.push(`Î´¼æÈİsize=${note.size}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(note)}"\nÀ´×Ô${filename}`);
-				if (note.yOffset !== 0) warnings.push(`Î´¼æÈİyOffset=${note.yOffset}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(note)}"\nÀ´×Ô${filename}`);
-				if (note.visibleTime !== 999999) warnings.push(`Î´¼æÈİvisibleTime=${note.visibleTime}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(note)}"\nÀ´×Ô${filename}`);
-				if (note.alpha !== 255) warnings.push(`Î´¼æÈİalpha=${note.alpha}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(note)}"\nÀ´×Ô${filename}`);
+				// if (note.above !== 1 && note.above !== 2) warnings.push(`æ£€æµ‹åˆ°éæ³•æ–¹å‘:${note.above}(å°†è¢«è§†ä¸º2)\nä½äº:"${JSON.stringify(note)}"\næ¥è‡ª${filename}`);
+				if (note.isFake !== 0) warnings.push(`æ£€æµ‹åˆ°FakeNote(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(note)}"\næ¥è‡ª${filename}`);
+				if (note.size !== 1) warnings.push(`æœªå…¼å®¹size=${note.size}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(note)}"\næ¥è‡ª${filename}`);
+				if (note.yOffset !== 0) warnings.push(`æœªå…¼å®¹yOffset=${note.yOffset}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(note)}"\næ¥è‡ª${filename}`);
+				if (note.visibleTime !== 999999) warnings.push(`æœªå…¼å®¹visibleTime=${note.visibleTime}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(note)}"\næ¥è‡ª${filename}`);
+				if (note.alpha !== 255) warnings.push(`æœªå…¼å®¹alpha=${note.alpha}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(note)}"\næ¥è‡ª${filename}`);
 				const type = [0, 1, 4, 2, 3].indexOf(note.type);
 				const time = bpmList.calc(note.startTime[0] + note.startTime[1] / note.startTime[2]);
 				const holdTime = bpmList.calc(note.endTime[0] + note.endTime[1] / note.endTime[2]) - time;
@@ -761,39 +761,39 @@ function parseRPE(pec, filename) {
 			}
 		}
 		for (const e of i.eventLayers) {
-			if (!e) continue; //ÓĞ¿ÉÄÜÊÇnull
+			if (!e) continue; //æœ‰å¯èƒ½æ˜¯null
 			const layer = new EventLayer;
 			for (const j of (e.moveXEvents || [])) {
 				if (j.linkgroup === undefined) j.linkgroup = 0;
-				if (j.linkgroup !== 0) warnings.push(`Î´¼æÈİlinkgroup=${j.linkgroup}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(j)}"\nÀ´×Ô${filename}`);
+				if (j.linkgroup !== 0) warnings.push(`æœªå…¼å®¹linkgroup=${j.linkgroup}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(j)}"\næ¥è‡ª${filename}`);
 				const startTime = bpmList.calc(j.startTime[0] + j.startTime[1] / j.startTime[2]);
 				const endTime = bpmList.calc(j.endTime[0] + j.endTime[1] / j.endTime[2]);
 				layer.pushMoveXEvent(startTime, endTime, j.start, j.end, j.easingType, j.easingLeft, j.easingRight);
 			}
 			for (const j of (e.moveYEvents || [])) {
 				if (j.linkgroup === undefined) j.linkgroup = 0;
-				if (j.linkgroup !== 0) warnings.push(`Î´¼æÈİlinkgroup=${j.linkgroup}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(j)}"\nÀ´×Ô${filename}`);
+				if (j.linkgroup !== 0) warnings.push(`æœªå…¼å®¹linkgroup=${j.linkgroup}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(j)}"\næ¥è‡ª${filename}`);
 				const startTime = bpmList.calc(j.startTime[0] + j.startTime[1] / j.startTime[2]);
 				const endTime = bpmList.calc(j.endTime[0] + j.endTime[1] / j.endTime[2]);
 				layer.pushMoveYEvent(startTime, endTime, j.start, j.end, j.easingType, j.easingLeft, j.easingRight);
 			}
 			for (const j of (e.rotateEvents || [])) {
 				if (j.linkgroup === undefined) j.linkgroup = 0;
-				if (j.linkgroup !== 0) warnings.push(`Î´¼æÈİlinkgroup=${j.linkgroup}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(j)}"\nÀ´×Ô${filename}`);
+				if (j.linkgroup !== 0) warnings.push(`æœªå…¼å®¹linkgroup=${j.linkgroup}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(j)}"\næ¥è‡ª${filename}`);
 				const startTime = bpmList.calc(j.startTime[0] + j.startTime[1] / j.startTime[2]);
 				const endTime = bpmList.calc(j.endTime[0] + j.endTime[1] / j.endTime[2]);
 				layer.pushRotateEvent(startTime, endTime, j.start, j.end, j.easingType, j.easingLeft, j.easingRight);
 			}
 			for (const j of (e.alphaEvents || [])) {
 				if (j.linkgroup === undefined) j.linkgroup = 0;
-				if (j.linkgroup !== 0) warnings.push(`Î´¼æÈİlinkgroup=${j.linkgroup}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(j)}"\nÀ´×Ô${filename}`);
+				if (j.linkgroup !== 0) warnings.push(`æœªå…¼å®¹linkgroup=${j.linkgroup}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(j)}"\næ¥è‡ª${filename}`);
 				const startTime = bpmList.calc(j.startTime[0] + j.startTime[1] / j.startTime[2]);
 				const endTime = bpmList.calc(j.endTime[0] + j.endTime[1] / j.endTime[2]);
 				layer.pushAlphaEvent(startTime, endTime, j.start, j.end, j.easingType, j.easingLeft, j.easingRight);
 			}
 			for (const j of (e.speedEvents || [])) {
 				if (j.linkgroup === undefined) j.linkgroup = 0;
-				if (j.linkgroup !== 0) warnings.push(`Î´¼æÈİlinkgroup=${j.linkgroup}(¿ÉÄÜÎŞ·¨Õı³£ÏÔÊ¾)\nÎ»ÓÚ:"${JSON.stringify(j)}"\nÀ´×Ô${filename}`);
+				if (j.linkgroup !== 0) warnings.push(`æœªå…¼å®¹linkgroup=${j.linkgroup}(å¯èƒ½æ— æ³•æ­£å¸¸æ˜¾ç¤º)\nä½äº:"${JSON.stringify(j)}"\næ¥è‡ª${filename}`);
 				const startTime = bpmList.calc(j.startTime[0] + j.startTime[1] / j.startTime[2]);
 				const endTime = bpmList.calc(j.endTime[0] + j.endTime[1] / j.endTime[2]);
 				layer.pushSpeedEvent(startTime, endTime, j.start, j.end);
@@ -812,14 +812,14 @@ function parseRPE(pec, filename) {
 		/** @type {LineRPE} */
 		const lineRPE = i.judgeLineRPE; //qwq
 		const judgeLine = lineRPE.format({
-			onwarning: msg => warnings.push(`${msg}\nÀ´×Ô${filename}`),
+			onwarning: msg => warnings.push(`${msg}\næ¥è‡ª${filename}`),
 		});
 		result.judgeLineList.push(judgeLine);
 		result.numOfNotes += judgeLine.numOfNotes;
 	}
 	return { data: JSON.stringify(result), messages: warnings, info: info, line: line };
 }
-//¶ÁÈ¡info.txt
+//è¯»å–info.txt
 function info(text) {
 	const lines = String(text).split(/\r?\n/);
 	const result = [];
@@ -840,17 +840,30 @@ function info(text) {
 }
 
 var fs = require('fs');
-let type = 1;
-if(type == 1){
-	fs.readFile('chart.json', 'utf-8', (err, data) => {
-		let res = parseRPE(data);
-		fs.writeFile('out.json', res.data, err => {});
-		console.log(res.messages);
+const readline = require('readline').createInterface({
+	input: process.stdin,
+	output: process.stdout,
+});
+
+readline.question(`Chart type(pec/rpe)?`, type => {
+	readline.question(`Chart file path?`, path => {
+		if(type == 'rpe'){
+			fs.readFile(path, 'utf-8', (err, data) => {
+				let res = parseRPE(data);
+				fs.writeFile('out.json', res.data, err => {});
+				for(let i of res.messages){
+					console.log(i);
+				}
+			});
+		}else{
+			fs.readFile(path, 'utf-8', (err, data) => {
+				let res = parse(data);
+				fs.writeFile('out.json', res.data, err => {});
+				for(let i of res.messages){
+					console.log(i);
+				}
+			});
+		}
+		readline.close();
 	});
-}else{
-	fs.readFile('chart.pec', 'utf-8', (err, data) => {
-		let res = parse(data);
-		fs.writeFile('out.json', res.data, err => {});
-		console.log(res.messages);
-	});
-}
+});

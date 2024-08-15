@@ -14,3 +14,5 @@ class JudgeManager:
                 note.hit(screen, *self.note_list[0].pos, self.note_list[0].deg)
             self.note_list[0].scored = 1
             self.note_list.pop(0)
+            if not self.note_list:
+                return
