@@ -41,9 +41,9 @@ class Note():
             yDist = self.floorPosition - self.line.floorPosition
             headPos = util.calcNotePos(self, max(0, yDist), fv)
             if time <= self.time:
-                yDistEnd = yDist + self.speed * self.holdTime * 1.875 / self.line.bpm
+                yDistEnd = yDist + self.speed * util.timeToSec(self.line.bpm, self.holdTime)
             elif self.time < time <= self.time + self.holdTime:
-                yDistEnd = self.speed * (self.time + self.holdTime - time) * 1.875 / self.line.bpm
+                yDistEnd = self.speed * util.timeToSec(self.line.bpm, self.time + self.holdTime - time)
             else:
                 yDistEnd = 0
             endPos = util.calcNotePos(self, yDistEnd, fv)

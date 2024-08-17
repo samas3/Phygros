@@ -48,7 +48,8 @@ class Line():
             if time > i.endTime:
                 self.speedEvents.remove(i)
             if util.inrng(time, i.startTime, i.endTime):
-                self.floorPosition = i.floorPosition + i.value * (time - i.startTime) * 1.875 / self.bpm
+                self.floorPosition = i.floorPosition + i.value * util.timeToSec(self.bpm, time - i.startTime)
+                break
         for i in self.disappearEvents:
             if time > i.endTime:
                 self.disappearEvents.remove(i)
@@ -75,7 +76,7 @@ class Line():
         width, height = screen.get_size()
         cx = self.x
         cy = self.y
-        deg = -self.deg # 旋转后坐标再转换！！
+        deg = -self.deg # 旋转后坐标再转换？
         pos = util.toPygamePos(*util.toChartPos(cx, cy, fv))
         pos[0] -= 2.88 * height
         left = util.rotate(*util.toPygamePos(*util.toChartPos(cx, cy, fv)), *pos, deg)
@@ -84,8 +85,6 @@ class Line():
         if 'mirror' in options:
             left = (width - left[0], left[1])
             right = (width - right[0], right[1])
-        if left[0] > right[0] and left[1] > right[1]:
-            left, right = right, left
         alpha = self.alpha * 255
         color = (*color, util.clamp(alpha, 0, 255))
         font = pygame.font.Font('font.ttf', 20)

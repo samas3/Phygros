@@ -46,6 +46,7 @@ def helpopt():
     t2 = Toplevel()
     t2.title('Phygros 设置说明')
     Label(t2, text='设置最大帧率：maxfps=<number>\n显示判定线编号：showid\n显示判定线信息：showinfo=<number>\n镜像:mirror\n开头不过渡:notrans\n最小宽度:minwidth=<number>\nnote宽度:notescale=<number>\n选项之间用;隔开').pack()
+    Label(t2, text='info.json格式:{"name":"xxx","lvl":"xxx"}').pack()
     # 变速:speed=<number>, 打印信息:printlog, 调整进度:begin=<number>
     t2.mainloop()
 Button(t, text='设置说明', command=helpopt, font=(None, 20)).grid(row=5, column=2)

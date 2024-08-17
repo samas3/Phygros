@@ -20,7 +20,7 @@ class Chart():
                 if j == 0:
                     i.speedEvents[j].floorPosition = 0
                 else:
-                    i.speedEvents[j].floorPosition = i.speedEvents[j - 1].floorPosition + i.speedEvents[j - 1].value * (k.startTime - i.speedEvents[j - 1].startTime) * 1.875 / i.bpm
+                    i.speedEvents[j].floorPosition = i.speedEvents[j - 1].floorPosition + i.speedEvents[j - 1].value * util.timeToSec(i.bpm, k.startTime - i.speedEvents[j - 1].startTime)
         self.all_notes.sort(key=lambda x: x.time + x.holdTime)
         self.jm = judge.JudgeManager(self.all_notes)
         self.check_line()
