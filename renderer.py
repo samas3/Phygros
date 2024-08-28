@@ -21,6 +21,7 @@ class Renderer():
         self.options = util.parse(options)
         self.chart = ch.Chart(chart, self.info, self.options)
     def play(self):
+        global scr
         pygame.init()
         rate = 2048 / 1080
         min_width = float(self.options.get('minwidth', 500))
@@ -29,31 +30,33 @@ class Renderer():
             bgimg = Image.open(self.bg).filter(ImageFilter.GaussianBlur(radius=6))
             enhancer = ImageEnhance.Brightness(bgimg)
             bgimg = enhancer.enhance(0.5)
-            bg = pygame.image.fromstring(bgimg.tobytes(), bgimg.size, bgimg.mode)
+            bg = pygame.image.fromstring(bgimg.tobytes(), bgimg.size, bgimg.mode).convert_alpha()
             width, height = bg.get_size()
             rate = width / height
             screen = pygame.display.set_mode((min_width * rate, min_width))
             bg = pygame.transform.scale(bg, (min_width * rate, min_width))
         screen2 = screen.convert_alpha()
+        util.scr = screen2.convert_alpha()
+        util.scr.set_alpha(0)
         width, height = (min_width * rate, min_width)
         util.init(width, height)
         pygame.display.set_caption('Phygros')
         pygame.mixer.music.load(self.music)
         music_on = False
         pause = False
-        timer = time.time()
+        timer = time.perf_counter()
         passed = 0
         if self.chart.offset > 0:
             time.sleep(self.chart.offset)
         tot = get_duration(self.music)
-        font = pygame.font.Font('font.ttf', 30)
+        font = pygame.font.Font(util.FONT, 30)
         clock = pygame.time.Clock()
         while True:
             if pause:
-                timer = time.time()
+                timer = time.perf_counter()
                 passed = tm
             else:
-                tm = passed + time.time() - timer
+                tm = passed + time.perf_counter() - timer
             tm2 = tm
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -85,6 +88,7 @@ class Renderer():
                     screen2.blit(fps_text, (width - fps_text.get_width() - 10, height / 2 - fps_text.get_height() / 2))
                     time_text = font.render(util.ftime(min(tm2, tot)) + '/' + util.ftime(tot) + (' (PAUSED)' if pause else ''), False, util.TEXT_COLOR)
                     if tm2 > tot + 3:
+                        pygame.quit()
                         break
                     pygame.draw.line(screen2, (127, 127, 127, 127), (0, 0), (pygame.mixer.music.get_pos() / 1000 / tot * width, 0), int(0.02 * height))
                     screen2.blit(time_text, (10, 10))
@@ -98,7 +102,7 @@ class Renderer():
                     pygame.draw.line(screen2, util.LINE_COLOR, (width / 2 * (1 - tm2 / 3), height / 2), (width / 2 * (1 + tm2 / 3), height / 2), int(0.0075 * height))
                 screen.blit(screen2, (0, 0))
                 pygame.display.flip()
-                clock.tick(float(self.options['maxfps']) if 'maxfps' in self.options else 60)
+                clock.tick(float(self.options['maxfps']) if 'maxfps' in self.options else 120)
                 continue
             break
 if __name__ == '__main__':

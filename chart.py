@@ -22,7 +22,7 @@ class Chart():
                 else:
                     i.speedEvents[j].floorPosition = i.speedEvents[j - 1].floorPosition + i.speedEvents[j - 1].value * util.timeToSec(i.bpm, k.startTime - i.speedEvents[j - 1].startTime)
         self.all_notes.sort(key=lambda x: x.time + x.holdTime)
-        self.jm = judge.JudgeManager(self.all_notes)
+        self.jm = judge.JudgeManager(self.all_notes, self.options)
         self.check_line()
         self.highlight()
         self.name = info.get('name', 'Untitled')
@@ -39,6 +39,7 @@ class Chart():
                 flag = 0
             elif i == 0 and j.startTime != 0 and isSpeed:
                 self.print(f'Warning: JudgeLine{line.id}.Event[0].startTime != 0')
+                j.startTime = 0
                 flag = 0
             elif i > 0:
                 if j.startTime != evt[i - 1].endTime:
@@ -93,9 +94,9 @@ class Chart():
         for i in self.lines:
             i.render(time, screen, util.LINE_COLOR, self.fv, options)
         # 后渲染界面，要不然会被挡
-        font = pygame.font.Font('font.ttf', 25)
-        combo_font = pygame.font.Font('font.ttf', 20)
-        combo_font2 = pygame.font.Font('font.ttf', 35)
+        font = pygame.font.Font(util.FONT, 25)
+        combo_font = pygame.font.Font(util.FONT, 20)
+        combo_font2 = pygame.font.Font(util.FONT, 35)
         name = font.render(self.name, False, util.TEXT_COLOR)
         lvl = font.render(self.lvl, False, util.TEXT_COLOR)
         width, height = screen.get_size()

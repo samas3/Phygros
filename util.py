@@ -3,6 +3,7 @@ w = 0
 h = 0
 TEXT_COLOR = (200, 200, 200, 200)
 LINE_COLOR = (254, 255, 169)
+FONT = 'src/font.ttf'
 def init(w_, h_):
     global w, h
     w = w_
@@ -21,9 +22,8 @@ def toChartPos(x, y, fv):
         x *= w
         y *= h
     else:
-        # 值不为1或3时，将画面中心作为坐标原点，向右为x轴正方向，向上为y轴正方向，以画面高度的1/10作为单位长度，其start和end为x，start2和end2为y。
-        # 这东西谁爱写谁写去
-        pass
+        x *= 0.1 * h + 0.5 * w
+        y *= 0.1 * h + 0.5 * h
     return [x, y]
 def toPygamePos(x, y):
     return [x, h - y]
@@ -56,9 +56,18 @@ def calcNotePos(note, yDist, fv):
     noteOffset = toXYUnit(note.positionX, yDist)
     x, y = noteOffset
     y *= (1 if note.isAbove else -1)
-    linePos[1] += (y - x * math.tan(math.radians(note.deg))) * math.cos(math.radians(note.deg))
-    linePos[0] += x / math.cos(math.radians(note.deg)) + (y - x * math.tan(math.radians(note.deg))) * math.sin(math.radians(note.deg))
+    tandeg = math.tan(math.radians(note.deg))
+    linePos[1] += (y - x * tandeg) * math.cos(math.radians(note.deg))
+    cosdeg = math.cos(math.radians(note.deg))
+    if abs(cosdeg) < 1e-5:
+        cosdeg = cosdeg / abs(cosdeg) * 1e-5
+    if abs(tandeg) > 1e5:
+        tandeg = tandeg / abs(tandeg) * 1e5
+    linePos[0] += x / cosdeg + (y - x * tandeg) * math.sin(math.radians(note.deg))
     linePos = toPygamePos(*linePos)
     return linePos
 def onScreen(x, y):
     return inrng(x, 0, w) and inrng(y, 0, h)
+def contains(lux1, luy1, rdx1, rdy1, lux2, luy2, rdx2, rdy2):
+    # 判断前4个坐标构成的矩形是否与后4个坐标构成的矩形相交
+    return abs(lux2 + rdx2 - lux1 - rdx1) <= (rdx1 - lux1 + rdx2 - lux2) and abs(luy2 + rdy2 - luy1 - rdy1) <= (rdy1 - luy1 + rdy2 - luy2)

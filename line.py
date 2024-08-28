@@ -1,6 +1,7 @@
 import pygame
 import note
 import util
+import renderer
 class Line():
     def __init__(self, lineJson, id=0):
         self.bpm = float(lineJson['bpm'])
@@ -32,7 +33,9 @@ class Line():
         self.disappearEvents.sort()
         self.moveEvents = []
         for i in lineJson['judgeLineMoveEvents']:
-            self.moveEvents.append(LineEvent(i))
+            moveEvt = LineEvent(i)
+            moveEvt.toFV3()
+            self.moveEvents.append(moveEvt)
         self.moveEvents.sort()
         self.rotateEvents = []
         for i in lineJson['judgeLineRotateEvents']:
@@ -73,11 +76,7 @@ class Line():
                 self.moveEvents.remove(i)
             if util.inrng(time, i.startTime, i.endTime):
                 self.x = util.rng(time, i.startTime, i.endTime, i.start, i.end)
-                if fv != 1:
-                    self.y = util.rng(time, i.startTime, i.endTime, i.start2, i.end2)
-                else:
-                    self.y = self.x % 1000
-                    self.x //= 1000
+                self.y = util.rng(time, i.startTime, i.endTime, i.start2, i.end2)
                 break
         for i in self.rotateEvents:
             if time > i.endTime:
@@ -97,9 +96,9 @@ class Line():
         if 'mirror' in options:
             left = (width - left[0], left[1])
             right = (width - right[0], right[1])
-        alpha = self.alpha * 255
-        color = (*color, util.clamp(alpha, 0, 255))
-        font = pygame.font.Font('font.ttf', 20)
+        alpha = int(self.alpha * 255) & 255
+        color = (*color, int(alpha))
+        font = pygame.font.Font(util.FONT, 20)
         if 'showid' in options:
             lineId = font.render(str(self.id), False, (255, 0, 0))
             screen.blit(lineId, util.toPygamePos(*util.toChartPos(cx, cy, fv)))
@@ -140,3 +139,10 @@ class LineEvent():
             self.end2 = float(evtJson['end2'])
     def __lt__(self, other):
         return self.startTime < other.startTime
+    def toFV3(self):
+        if 'start2' in self.__dict__:
+            return
+        self.start2 = self.start % 1000
+        self.start //= 1000
+        self.end2 = self.end % 1000
+        self.end //= 1000
