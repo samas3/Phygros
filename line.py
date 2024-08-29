@@ -1,7 +1,6 @@
 import pygame
 import note
 import util
-import renderer
 class Line():
     def __init__(self, lineJson, id=0):
         self.bpm = float(lineJson['bpm'])

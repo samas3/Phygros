@@ -1,4 +1,5 @@
-chart.json
-chart.pec
+*.json
+*.pec
+*.rpe
 out.json
 __pycache__

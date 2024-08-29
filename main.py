@@ -49,5 +49,5 @@ def helpopt():
     Label(t2, text='info.json格式:{"name":"xxx","lvl":"xxx"}').pack()
     # 变速:speed=<number>, 打印信息:printlog,
     t2.mainloop()
-Button(t, text='设置说明', command=helpopt, font=(None, 20)).grid(row=5, column=2)
+Button(t, text='设置说明', command=helpopt, font=(None, 20)).grid(row=5, column=1, columnspan=2)
 t.mainloop()
