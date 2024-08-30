@@ -36,8 +36,6 @@ class Renderer():
             screen = pygame.display.set_mode((min_width * rate, min_width))
             bg = pygame.transform.scale(bg, (min_width * rate, min_width))
         screen2 = screen.convert_alpha()
-        util.scr = screen2.convert_alpha()
-        util.scr.set_alpha(0)
         width, height = (min_width * rate, min_width)
         util.init(width, height)
         pygame.display.set_caption('Phygros')

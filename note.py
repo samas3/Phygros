@@ -75,7 +75,7 @@ def hold(screen, headX, headY, endX, endY, note, scale):
     luy = min(headY, endY)
     rux = max(headX, endX)
     ruy = max(headY, endY)
-    if not util.contains(lux, luy, rux, ruy, 0, 0, width, height):
+    if not util.intersect(lux, luy, rux, ruy, 0, 0, width, height):
         return
     '''scr = pygame.Surface((0.14 * height, math.sqrt((headX - endX) ** 2 + (headY - endY) ** 2)), pygame.SRCALPHA)
     scr.fill((10, 195, 255))
@@ -84,7 +84,10 @@ def hold(screen, headX, headY, endX, endY, note, scale):
     rotated = pygame.transform.rotate(scr, note.deg)
     rect = rotated.get_rect(center=(midX, midY))
     screen.blit(rotated, rect)''' # 性能代价太大
-    pygame.draw.line(screen, (10, 195, 255, 128), (headX, headY), (endX, endY), int(0.14 * height * scale))
+    left = util.rotate(headX, headY, headX - 0.07 * height * scale, headY, note.deg)
+    right = util.rotate(headX, headY, headX + 0.07 * height * scale, headY, note.deg)
+    pygame.draw.line(screen, (10, 195, 255), left, right, int(0.01 * height * scale)) # holdHead
+    pygame.draw.line(screen, (255, 255, 255), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody
     if note.hl:
         pygame.draw.circle(screen, util.LINE_COLOR, (int(headX), int(headY)), int(0.02 * height * scale))
 def hit(screen, x, y, deg, type, options):
