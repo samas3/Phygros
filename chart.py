@@ -85,11 +85,17 @@ class Chart():
         self.notes = cnt
         return self.notes
     def highlight(self):
-        for i in self.lines:
-            for j in i.notesAbove:
-                j.find_near(self)
-            for j in i.notesBelow:
-                j.find_near(self)
+        notes = sorted(self.all_notes, key=lambda x: x.realTime)
+        hl = []
+        start = 0
+        for end in range(len(notes)):
+            while start < end and notes[end].realTime - notes[start].realTime > 0.01:
+                start += 1
+            if start == end:
+                continue
+            hl += notes[start: end + 1]
+        for i in hl:
+            i.hl = True
     def render(self, time, screen, options):
         for i in self.lines:
             i.render(time, screen, util.LINE_COLOR, self.fv, options)

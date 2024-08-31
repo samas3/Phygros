@@ -20,10 +20,7 @@ class Note():
         self.hl = False
         self.pos = []
         self.hit = False
-    def find_near(self, chart):
-        for i in chart.all_notes:
-            if util.eq(util.timeToSec(self.line.bpm, self.time), util.timeToSec(i.line.bpm, i.time), eps=0.02) and (self.id != i.id or self.line.id != i.line.id):
-                self.hl = i.hl = True
+        self.realTime = util.timeToSec(self.line.bpm, self.time)
     def render(self, screen, time, fv, options):
         self.deg = -self.line.deg
         if 'notescale' in options:
