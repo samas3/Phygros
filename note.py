@@ -22,6 +22,8 @@ class Note():
         self.hit = False
         self.realTime = util.timeToSec(self.line.bpm, self.time)
     def render(self, screen, time, fv, options):
+        if self.scored:
+            return
         self.deg = -self.line.deg
         if 'notescale' in options:
             scale = float(options['notescale'])
@@ -50,15 +52,14 @@ class Note():
             if time > self.time and not self.hit:
                 self.hit = True
                 sound.play(0, options)
-            if time > self.time + self.holdTime and not self.scored:
-                self.scored = 1
             if util.inrng(time, self.time, self.time + self.holdTime):
-                if not self.scored:
-                    hitPos = util.calcNotePos(self, 0, fv)
-                    hit(screen, *hitPos, self.deg, 3, options)
+                hitPos = util.calcNotePos(self, 0, fv)
+                hit(screen, *hitPos, self.deg, 3, options)
 def note(screen, x, y, note, scale):
     width, height = screen.get_size()
-    if not util.onScreen(x, y):
+    lu = [x - 0.07 * height * scale, y - 0.005 * height]
+    rd = [x + 0.07 * height * scale, y + 0.005 * height]
+    if not util.intersect(*lu, *rd, 0, 0, width, height):
         return
     left = util.rotate(x, y, x - 0.07 * height * scale, y, note.deg)
     right = util.rotate(x, y, x + 0.07 * height * scale, y, note.deg)

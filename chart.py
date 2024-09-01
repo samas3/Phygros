@@ -24,7 +24,8 @@ class Chart():
         self.all_notes.sort(key=lambda x: x.time + x.holdTime)
         self.jm = judge.JudgeManager(self.all_notes, self.options)
         self.check_line()
-        self.highlight()
+        if 'nohl' not in options:
+            self.highlight()
         self.name = info.get('name', 'Untitled')
         self.lvl = info.get('lvl', 'SP Lv.?')
         self.numOfNotes = self.notes()

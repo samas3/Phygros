@@ -66,8 +66,6 @@ def calcNotePos(note, yDist, fv):
     linePos[0] += x / cosdeg + (y - x * tandeg) * math.sin(math.radians(note.deg))
     linePos = toPygamePos(*linePos)
     return linePos
-def onScreen(x, y):
-    return inrng(x, 0, w) and inrng(y, 0, h)
 def intersect(lux1, luy1, rdx1, rdy1, lux2, luy2, rdx2, rdy2):
     # 判断前4个坐标构成的矩形是否与后4个坐标构成的矩形相交
     return abs(lux2 + rdx2 - lux1 - rdx1) <= (rdx1 - lux1 + rdx2 - lux2) and abs(luy2 + rdy2 - luy1 - rdy1) <= (rdy1 - luy1 + rdy2 - luy2)

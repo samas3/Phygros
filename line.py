@@ -49,13 +49,6 @@ class Line():
         self.floorPosition = 0
     def notes(self):
         return len(self.notesAbove) + len(self.notesBelow)
-    def scored(self):
-        res = 0
-        for i in self.notesAbove:
-            res += i.scored
-        for i in self.notesBelow:
-            res += i.scored
-        return res
     def render(self, time, screen, color, fv, options):
         time = util.secToTime(self.bpm, time)
         for i in self.speedEvents:
