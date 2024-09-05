@@ -89,7 +89,7 @@ class Line():
             left = (width - left[0], left[1])
             right = (width - right[0], right[1])
         alpha = int(self.alpha * 255) & 255
-        color = (*color, int(alpha))
+        color = (*color, alpha)
         font = pygame.font.Font(util.FONT, 20)
         if 'showid' in options:
             lineId = font.render(str(self.id), False, (255, 0, 0))
