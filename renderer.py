@@ -47,7 +47,8 @@ class Renderer():
         if self.chart.offset > 0:
             time.sleep(self.chart.offset)
         tot = get_duration(self.music)
-        font = pygame.font.Font(util.FONT, 30)
+        font = pygame.font.Font(util.FONT, 24)
+        fps_font = pygame.font.Font(util.FONT, 15)
         clock = pygame.time.Clock()
         while True:
             if pause:
@@ -82,7 +83,7 @@ class Renderer():
                     if 'speed' in self.options:
                         tm2 *= float(self.options['speed'])
                     self.chart.render(tm2, screen2, self.options)
-                    fps_text = font.render('{:.0f}'.format(clock.get_fps()), False, util.TEXT_COLOR)
+                    fps_text = fps_font.render('{:.0f}'.format(clock.get_fps()), False, util.TEXT_COLOR)
                     screen2.blit(fps_text, (width - fps_text.get_width() - 10, height / 2 - fps_text.get_height() / 2))
                     time_text = font.render(util.ftime(min(tm2, tot)) + '/' + util.ftime(tot) + (' (PAUSED)' if pause else ''), False, util.TEXT_COLOR)
                     if tm2 > tot + 3:
@@ -100,7 +101,7 @@ class Renderer():
                     pygame.draw.line(screen2, util.LINE_COLOR, (width / 2 * (1 - tm2 / 3), height / 2), (width / 2 * (1 + tm2 / 3), height / 2), int(0.0075 * height))
                 screen.blit(screen2, (0, 0))
                 pygame.display.flip()
-                clock.tick(float(self.options['maxfps']) if 'maxfps' in self.options else 120)
+                clock.tick(float(self.options['maxfps']) if 'maxfps' in self.options else 60)
                 continue
             break
 if __name__ == '__main__':

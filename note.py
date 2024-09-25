@@ -11,6 +11,7 @@ class Note():
         self.floorPosition = float(noteJson['floorPosition'])
         self.line = line
         self.isAbove = isAbove
+        self.scale = 1
 
         self.x = 0
         self.y = 0
@@ -26,14 +27,12 @@ class Note():
             return
         self.deg = -self.line.deg
         if 'notescale' in options:
-            scale = float(options['notescale'])
-        else:
-            scale = 1
+            note.scale *= float(options['notescale'])
         if self.type != 3:
             yDist = self.speed * (self.floorPosition - self.line.floorPosition)
             linePos = util.calcNotePos(self, yDist, fv)
             self.pos = linePos
-            note(screen, *linePos, self, scale)
+            note(screen, *linePos, self)
             '''if 'showid' in options:
                 font = pygame.font.Font(util.FONT, 20)
                 id_text = font.render(str(self.id), False, (255, 255, 255))
@@ -48,14 +47,15 @@ class Note():
             else:
                 yDistEnd = 0
             endPos = util.calcNotePos(self, yDistEnd, fv)
-            hold(screen, *headPos, *endPos, self, scale)
-            if time > self.time and not self.hit:
-                self.hit = True
-                sound.play(0, options)
+            hold(screen, *headPos, *endPos, self)
             if util.inrng(time, self.time, self.time + self.holdTime):
+                if not self.hit:
+                    self.hit = True
+                    sound.play(0, options)
                 hitPos = util.calcNotePos(self, 0, fv)
                 hit(screen, *hitPos, self.deg, 3, options)
-def note(screen, x, y, note, scale):
+def note(screen, x, y, note):
+    scale = note.scale
     width, height = screen.get_size()
     lu = [x - 0.07 * height * scale, y - 0.005 * height]
     rd = [x + 0.07 * height * scale, y + 0.005 * height]
@@ -66,9 +66,10 @@ def note(screen, x, y, note, scale):
     color = [None, (10, 195, 255), (240, 237, 105), None, (254, 67, 101)]
     pygame.draw.line(screen, color[note.type], left, right, int(0.01 * height))
     if note.hl:
-        pygame.draw.circle(screen, util.LINE_COLOR, (int(x), int(y)), int(0.02 * height * scale))
-def hold(screen, headX, headY, endX, endY, note, scale):
+        pygame.draw.line(screen, util.HL_COLOR, left, right, int(0.005 * height * scale))
+def hold(screen, headX, headY, endX, endY, note):
     width, height = screen.get_size()
+    scale = note.scale
     lux = min(headX, endX)
     luy = min(headY, endY)
     rux = max(headX, endX)
@@ -87,7 +88,7 @@ def hold(screen, headX, headY, endX, endY, note, scale):
     pygame.draw.line(screen, (10, 195, 255), left, right, int(0.01 * height * scale)) # holdHead
     pygame.draw.line(screen, (255, 255, 255), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody
     if note.hl:
-        pygame.draw.circle(screen, util.LINE_COLOR, (int(headX), int(headY)), int(0.02 * height * scale))
+        pygame.draw.line(screen, util.HL_COLOR, left, right, int(0.005 * height * scale))
 def hit(screen, x, y, deg, type, options):
     scr = pygame.Surface((20, 20), pygame.SRCALPHA)
     scr.fill(util.LINE_COLOR)

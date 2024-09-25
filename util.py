@@ -1,8 +1,9 @@
 import math
 w = 0
 h = 0
-TEXT_COLOR = (200, 200, 200, 200)
+TEXT_COLOR = (255, 255, 255)
 LINE_COLOR = (254, 255, 169)
+HL_COLOR = (0, 127, 0)
 FONT = 'src/font.ttf'
 def init(w_, h_):
     global w, h
@@ -34,8 +35,11 @@ def secToTime(bpm, time):
 def timeToSec(bpm, time):
     return time * 1.875 / bpm
 def rotate(cx, cy, x, y, deg):
-    newx = math.cos(math.radians(deg)) * (x - cx) - math.sin(math.radians(deg)) * (y - cy) + cx
-    newy = math.sin(math.radians(deg)) * (x - cx) + math.cos(math.radians(deg)) * (y - cy) + cy
+    rad = math.radians(deg)
+    sindeg = math.sin(rad)
+    cosdeg = math.cos(rad)
+    newx = cosdeg * (x - cx) - sindeg * (y - cy) + cx
+    newy = sindeg * (x - cx) + cosdeg * (y - cy) + cy
     return [newx, newy]
 def ftime(tm):
     return f'{int(tm // 60)}:{f"0{int(tm % 60)}"[-2:]}'
@@ -53,17 +57,17 @@ def clamp(val, x, y):
     return x if val < x else (y if val > y else val)
 def calcNotePos(note, yDist, fv):
     linePos = toChartPos(note.line.x, note.line.y, fv)
-    noteOffset = toXYUnit(note.positionX, yDist)
-    x, y = noteOffset
-    y *= (1 if note.isAbove else -1)
-    tandeg = math.tan(math.radians(note.deg))
-    linePos[1] += (y - x * tandeg) * math.cos(math.radians(note.deg))
-    cosdeg = math.cos(math.radians(note.deg))
+    x, y = toXYUnit(note.positionX, yDist)
+    rad = math.radians(note.deg)
+    if not note.isAbove:
+        y = -y
+    sindeg = math.sin(rad)
+    cosdeg = math.cos(rad)
     if abs(cosdeg) < 1e-5:
         cosdeg = cosdeg / abs(cosdeg) * 1e-5
-    if abs(tandeg) > 1e5:
-        tandeg = tandeg / abs(tandeg) * 1e5
-    linePos[0] += x / cosdeg + (y - x * tandeg) * math.sin(math.radians(note.deg))
+    tandeg = sindeg / cosdeg
+    linePos[1] += y * cosdeg - x * sindeg
+    linePos[0] += x / cosdeg + (y - x * tandeg) * sindeg
     linePos = toPygamePos(*linePos)
     return linePos
 def intersect(lux1, luy1, rdx1, rdy1, lux2, luy2, rdx2, rdy2):

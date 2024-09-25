@@ -98,12 +98,16 @@ class Chart():
         for i in hl:
             i.hl = True
     def render(self, time, screen, options):
+        for i in self.all_notes:
+            chartTime = util.secToTime(i.line.bpm, time)
+            if i.time + i.holdTime >= chartTime:
+                i.render(screen, chartTime, self.fv, options)
         for i in self.lines:
             i.render(time, screen, util.LINE_COLOR, self.fv, options)
         # 后渲染界面，要不然会被挡
-        font = pygame.font.Font(util.FONT, 25)
-        combo_font = pygame.font.Font(util.FONT, 20)
-        combo_font2 = pygame.font.Font(util.FONT, 35)
+        font = pygame.font.Font(util.FONT, 20)
+        combo_font = pygame.font.Font(util.FONT, 16)
+        combo_font2 = pygame.font.Font(util.FONT, 26)
         name = font.render(self.name, False, util.TEXT_COLOR)
         lvl = font.render(self.lvl, False, util.TEXT_COLOR)
         width, height = screen.get_size()
@@ -113,7 +117,7 @@ class Chart():
         combo_num = combo_font2.render(str(self.jm.combo), False, util.TEXT_COLOR)
         combo_text = combo_font.render('AUTOPLAY', False, util.TEXT_COLOR)
         if self.jm.combo > 2:
-            screen.blit(combo_num, (width / 2 - combo_num.get_width() / 2, 0))
+            screen.blit(combo_num, (width / 2 - combo_num.get_width() / 2, 10))
             screen.blit(combo_text, (width / 2 - combo_text.get_width() / 2, 40))
         score_num = combo_font2.render(str(round(self.jm.combo / self.notes * 1e6)).zfill(7), False, util.TEXT_COLOR)
         screen.blit(score_num, (width - score_num.get_width() - 10, 10))

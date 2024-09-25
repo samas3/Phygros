@@ -107,12 +107,6 @@ class Line():
             screen.blit(lineInfo, (10, 110))
         if alpha > 0:
             pygame.draw.line(screen, color, left, right, int(0.0075 * height))
-        for i in self.notesAboveHold + self.notesBelowHold:
-            if time <= i.time + i.holdTime:
-                i.render(screen, time, fv, options)
-        for i in self.notesAboveNoHold + self.notesBelowNoHold:
-            if time <= i.time + i.holdTime:
-                i.render(screen, time, fv, options)
 class SpeedEvent():
     def __init__(self, evtJson):
         self.startTime = int(evtJson['startTime'])
