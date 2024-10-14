@@ -1,5 +1,6 @@
 import pygame
 import chart as ch
+import rpe
 import time
 import util
 import json
@@ -15,11 +16,16 @@ class Renderer():
         if os.path.isfile(info):
             self.info = json.load(open(info, encoding='utf-8'))
         else:
-            self.info = {'name': 'Untitled', 'lvl': 'SP Lv.?'}
+            self.info = json.load(open('samplejson'))
         self.music = music
         self.bg = bg
         self.options = util.parse(options)
-        self.chart = ch.Chart(chart, self.info, self.options)
+        self.chartjson = json.load(open(chart, encoding='utf-8'))
+        if 'META' in self.chartjson:
+            self.chart = rpe.RPE(self.chartjson)
+            self.info = self.chart.info
+        else:
+            self.chart = ch.Chart(self.chartjson, self.info, self.options)
     def play(self):
         global scr
         pygame.init()
@@ -42,7 +48,7 @@ class Renderer():
         pygame.mixer.music.load(self.music)
         music_on = False
         pause = False
-        timer = time.perf_counter()
+        timer = pygame.time.get_ticks() / 1000
         passed = 0
         if self.chart.offset > 0:
             time.sleep(self.chart.offset)
@@ -52,10 +58,10 @@ class Renderer():
         clock = pygame.time.Clock()
         while True:
             if pause:
-                timer = time.perf_counter()
+                timer = pygame.time.get_ticks() / 1000
                 passed = tm
             else:
-                tm = passed + time.perf_counter() - timer
+                tm = passed + pygame.time.get_ticks() / 1000 - timer
             tm2 = tm
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -94,10 +100,19 @@ class Renderer():
                 else:
                     name = self.info.get('name', 'Untitled')
                     lvl = self.info.get('lvl', 'SP Lv.?')
+                    charter = self.info.get('charter', '?')
+                    composer = self.info.get('composer', '?')
+                    illustration = self.info.get('illustration', '?')
                     name_text = font.render(name, False, util.TEXT_COLOR)
                     lvl_text = font.render(lvl, False, util.TEXT_COLOR)
+                    charter_text = font.render('Chart by ' + charter, False, util.TEXT_COLOR)
+                    composer_text = font.render('Composed by ' + composer, False, util.TEXT_COLOR)
+                    illustration_text = font.render('Illustrated by ' + illustration, False, util.TEXT_COLOR)
                     screen2.blit(name_text, (width / 2 - name_text.get_width() / 2, height / 2 - 90))
                     screen2.blit(lvl_text, (width / 2 - lvl_text.get_width() / 2, height / 2 - 50))
+                    screen2.blit(charter_text, (width / 2 - charter_text.get_width() / 2, height / 2 + 15))
+                    screen2.blit(composer_text, (width / 2 - composer_text.get_width() / 2, height / 2 + 55))
+                    screen2.blit(illustration_text, (width / 2 - illustration_text.get_width() / 2, height / 2 + 95))
                     pygame.draw.line(screen2, util.LINE_COLOR, (width / 2 * (1 - tm2 / 3), height / 2), (width / 2 * (1 + tm2 / 3), height / 2), int(0.0075 * height))
                 screen.blit(screen2, (0, 0))
                 pygame.display.flip()

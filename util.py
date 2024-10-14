@@ -1,10 +1,31 @@
 import math
+import pygame
+import numpy as np
+pygame.display.init()
+pygame.display.set_mode((1, 1), pygame.NOFRAME)
 w = 0
 h = 0
 TEXT_COLOR = (255, 255, 255)
 LINE_COLOR = (254, 255, 169)
 HL_COLOR = (0, 127, 0)
 FONT = 'src/font.ttf'
+def loadRes(name, x=0, y=0):
+    img = pygame.image.load(f'src/{name}.png').convert_alpha()
+    if x or y:
+        img = pygame.transform.scale(img, (x, y))
+    return img
+res = [None, loadRes('Tap'), loadRes('Drag'), loadRes('Hold'), loadRes('Flick'), loadRes('TapHL'), loadRes('DragHL'), None, loadRes('FlickHL')]
+def displayRes(id, pos, size, deg, alpha=255, color=None):
+    img = res[id]
+    img = pygame.transform.scale(img, size)
+    img.set_alpha(alpha)
+    if color:
+        img.fill(color, None, pygame.BLEND_RGBA_MULT)
+    #img = rotate_image(img, deg)
+    img = pygame.transform.rotate(img, deg)
+    rect = img.get_rect()
+    rect.center = pos
+    return [img, rect]
 def init(w_, h_):
     global w, h
     w = w_

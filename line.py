@@ -44,7 +44,7 @@ class Line():
         self.x = 0
         self.y = 0
         self.deg = 0
-        self.alpha = 1
+        self.alpha = 0
         self.id = id
         self.floorPosition = 0
     def notes(self):
@@ -54,28 +54,36 @@ class Line():
         for i in self.speedEvents:
             if time > i.endTime:
                 self.speedEvents.remove(i)
-            if util.inrng(time, i.startTime, i.endTime):
-                self.floorPosition = i.floorPosition + i.value * util.timeToSec(self.bpm, time - i.startTime)
+                continue
+            if time < i.startTime:
                 break
+            self.floorPosition = i.floorPosition + i.value * util.timeToSec(self.bpm, time - i.startTime)
+            break
         for i in self.disappearEvents:
             if time > i.endTime:
                 self.disappearEvents.remove(i)
-            if util.inrng(time, i.startTime, i.endTime):
-                self.alpha = util.rng(time, i.startTime, i.endTime, i.start, i.end) # 为什么0是透明1是不透明
+                continue
+            if time < i.startTime:
                 break
+            self.alpha = util.rng(time, i.startTime, i.endTime, i.start, i.end) # 为什么0是透明1是不透明
+            break
         for i in self.moveEvents:
             if time > i.endTime:
                 self.moveEvents.remove(i)
-            if util.inrng(time, i.startTime, i.endTime):
-                self.x = util.rng(time, i.startTime, i.endTime, i.start, i.end)
-                self.y = util.rng(time, i.startTime, i.endTime, i.start2, i.end2)
+                continue
+            if time < i.startTime:
                 break
+            self.x = util.rng(time, i.startTime, i.endTime, i.start, i.end)
+            self.y = util.rng(time, i.startTime, i.endTime, i.start2, i.end2)
+            break
         for i in self.rotateEvents:
             if time > i.endTime:
                 self.rotateEvents.remove(i)
-            if util.inrng(time, i.startTime, i.endTime):
-                self.deg = util.rng(time, i.startTime, i.endTime, i.start, i.end)
+                continue
+            if time < i.startTime:
                 break
+            self.deg = util.rng(time, i.startTime, i.endTime, i.start, i.end)
+            break
         width, height = screen.get_size()
         cx = self.x
         cy = self.y

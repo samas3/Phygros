@@ -1,11 +1,9 @@
-import json
 import line
 import util
 import pygame
 import judge
 class Chart():
     def __init__(self, chart, info={}, options={}):
-        chart = json.load(open(chart))
         self.options = options
         self.fv = int(chart['formatVersion'])
         self.offset = float(chart['offset'])

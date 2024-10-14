@@ -61,12 +61,8 @@ def note(screen, x, y, note):
     rd = [x + 0.07 * height * scale, y + 0.005 * height]
     if not util.intersect(*lu, *rd, 0, 0, width, height):
         return
-    left = util.rotate(x, y, x - 0.07 * height * scale, y, note.deg)
-    right = util.rotate(x, y, x + 0.07 * height * scale, y, note.deg)
-    color = [None, (10, 195, 255), (240, 237, 105), None, (254, 67, 101)]
-    pygame.draw.line(screen, color[note.type], left, right, int(0.01 * height))
-    if note.hl:
-        pygame.draw.line(screen, util.HL_COLOR, left, right, int(0.005 * height * scale))
+    spirit, rect = util.displayRes(note.type + (4 if note.hl else 0), (x, y), (int(0.14 * height * scale), int(0.01 * height)), -note.deg)
+    screen.blit(spirit, rect)
 def hold(screen, headX, headY, endX, endY, note):
     width, height = screen.get_size()
     scale = note.scale
@@ -76,19 +72,10 @@ def hold(screen, headX, headY, endX, endY, note):
     ruy = max(headY, endY)
     if not util.intersect(lux, luy, rux, ruy, 0, 0, width, height):
         return
-    '''scr = pygame.Surface((0.14 * height, math.sqrt((headX - endX) ** 2 + (headY - endY) ** 2)), pygame.SRCALPHA)
-    scr.fill((10, 195, 255))
-    midX = (headX + endX) / 2
-    midY = (headY + endY) / 2
-    rotated = pygame.transform.rotate(scr, note.deg)
-    rect = rotated.get_rect(center=(midX, midY))
-    screen.blit(rotated, rect)''' # 性能代价太大
-    left = util.rotate(headX, headY, headX - 0.07 * height * scale, headY, note.deg)
-    right = util.rotate(headX, headY, headX + 0.07 * height * scale, headY, note.deg)
-    pygame.draw.line(screen, (10, 195, 255), left, right, int(0.01 * height * scale)) # holdHead
+    
+    spirit, rect = util.displayRes((5 if note.hl else 1), (headX, headY), (int(0.14 * height * scale), int(0.01 * height)), -note.deg)
+    screen.blit(spirit, rect) # holdHead
     pygame.draw.line(screen, (255, 255, 255), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody
-    if note.hl:
-        pygame.draw.line(screen, util.HL_COLOR, left, right, int(0.005 * height * scale))
 def hit(screen, x, y, deg, type, options):
     scr = pygame.Surface((20, 20), pygame.SRCALPHA)
     scr.fill(util.LINE_COLOR)

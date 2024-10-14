@@ -3,3 +3,4 @@
 *.rpe
 out.json
 __pycache__
+bezier.py
