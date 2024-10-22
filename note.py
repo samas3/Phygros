@@ -72,7 +72,6 @@ def hold(screen, headX, headY, endX, endY, note):
     ruy = max(headY, endY)
     if not util.intersect(lux, luy, rux, ruy, 0, 0, width, height):
         return
-    
     spirit, rect = util.displayRes((5 if note.hl else 1), (headX, headY), (int(0.14 * height * scale), int(0.01 * height)), -note.deg)
     screen.blit(spirit, rect) # holdHead
     pygame.draw.line(screen, (255, 255, 255), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody

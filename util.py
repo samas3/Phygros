@@ -51,6 +51,8 @@ def toPygamePos(x, y):
     return [x, h - y]
 def toXYUnit(x, y):
     return [x * 9 / 160 * w, y * 3 / 5 * h]
+def toXYUnitRPE(x, y):
+    return [x / 1350 * w, y * 3 / 5 * h]
 def secToTime(bpm, time):
     return time * bpm / 1.875
 def timeToSec(bpm, time):
@@ -78,8 +80,12 @@ def clamp(val, x, y):
     return x if val < x else (y if val > y else val)
 def calcNotePos(note, yDist, fv):
     linePos = toChartPos(note.line.x, note.line.y, fv)
+    if fv == -1: # rpe
+        linePos = toChartPos(note.line.x, note.line.y, 3)
     x, y = toXYUnit(note.positionX, yDist)
     rad = math.radians(note.deg)
+    if fv == -1:
+        rad = math.radians(-note.deg)
     if not note.isAbove:
         y = -y
     sindeg = math.sin(rad)

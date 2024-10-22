@@ -88,11 +88,12 @@ class Line():
         cx = self.x
         cy = self.y
         deg = -self.deg # 旋转后坐标再转换？
-        pos = util.toPygamePos(*util.toChartPos(cx, cy, fv))
+        originalPos = util.toPygamePos(*util.toChartPos(cx, cy, fv))
+        pos = originalPos[:]
         pos[0] -= 2.88 * height
-        left = util.rotate(*util.toPygamePos(*util.toChartPos(cx, cy, fv)), *pos, deg)
+        left = util.rotate(*originalPos, *pos, deg)
         pos[0] += 5.76 * height
-        right = util.rotate(*util.toPygamePos(*util.toChartPos(cx, cy, fv)), *pos, deg)
+        right = util.rotate(*originalPos, *pos, deg)
         if 'mirror' in options:
             left = (width - left[0], left[1])
             right = (width - right[0], right[1])
