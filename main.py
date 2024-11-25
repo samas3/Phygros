@@ -6,7 +6,7 @@ t.title('Phygros 主界面')
 Label(t, text='谱面路径:', font=(None, 20)).grid(row=0, column=0, padx=10, pady=10)
 Label(t, text='音乐路径:', font=(None, 20)).grid(row=1, column=0, padx=10, pady=10)
 Label(t, text='曲绘路径:', font=(None, 20)).grid(row=2, column=0, padx=10, pady=10)
-Label(t, text='info.json路径:', font=(None, 20)).grid(row=3, column=0, padx=10, pady=10)
+Label(t, text='info文件路径:', font=(None, 20)).grid(row=3, column=0, padx=10, pady=10)
 chart = Entry(t, font=(None, 20))
 chart.grid(row=0, column=1, padx=10, pady=10)
 music = Entry(t, font=(None, 20))
@@ -20,7 +20,7 @@ def choose1():
     chart.delete(0, 'end')
     chart.insert('end', path)
 def choose2():
-    path = filedialog.askopenfilename(filetypes=[('Music', ['*.wav', '*.mp3'])])
+    path = filedialog.askopenfilename(filetypes=[('Music', ['*.wav', '*.mp3', '*.ogg'])])
     music.delete(0, 'end')
     music.insert('end', path)
 def choose3():
@@ -28,7 +28,7 @@ def choose3():
     bg.delete(0, 'end')
     bg.insert('end', path)
 def choose4():
-    path = filedialog.askopenfilename(filetypes=[('JSON', '*.json')])
+    path = filedialog.askopenfilename(filetypes=[('Info', ['*.json', '*.csv'])])
     info.delete(0, 'end')
     info.insert('end', path)
 Button(t, text='选择', command=choose1, font=(None, 20)).grid(row=0, column=2)

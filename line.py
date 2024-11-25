@@ -99,7 +99,7 @@ class Line():
             right = (width - right[0], right[1])
         alpha = int(self.alpha * 255) & 255
         color = (*color, alpha)
-        font = pygame.font.Font(util.FONT, 20)
+        font = util.font(20)
         if 'showid' in options:
             lineId = font.render(str(self.id), False, (255, 0, 0))
             screen.blit(lineId, util.toPygamePos(*util.toChartPos(cx, cy, fv)))

@@ -25,7 +25,7 @@ class Chart():
         if 'nohl' not in options:
             self.highlight()
         self.name = info.get('name', 'Untitled')
-        self.lvl = info.get('lvl', 'SP Lv.?')
+        self.lvl = info.get('level', 'SP Lv.?')
         self.numOfNotes = self.notes()
     def print(self, str):
         if 'printlog' in self.options:
@@ -103,9 +103,9 @@ class Chart():
         for i in self.lines:
             i.render(time, screen, util.LINE_COLOR, self.fv, options)
         # 后渲染界面，要不然会被挡
-        font = pygame.font.Font(util.FONT, 20)
-        combo_font = pygame.font.Font(util.FONT, 16)
-        combo_font2 = pygame.font.Font(util.FONT, 26)
+        font = util.font(20)
+        combo_font = util.font(16)
+        combo_font2 = util.font(26)
         name = font.render(self.name, False, util.TEXT_COLOR)
         lvl = font.render(self.lvl, False, util.TEXT_COLOR)
         width, height = screen.get_size()

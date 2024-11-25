@@ -1,7 +1,7 @@
+import csv
 import pygame
 import chart as ch
 import rpe
-import time
 import util
 import json
 import os
@@ -14,7 +14,10 @@ def get_duration(file_path):
 class Renderer():
     def __init__(self, chart, music, bg, info, options=''):
         if os.path.isfile(info):
-            self.info = json.load(open(info, encoding='utf-8'))
+            if info.endswith('.json'):
+                self.info = json.load(open(info, encoding='utf-8'))
+            else:
+                self.info = self.parseCSV(open(info, encoding='utf-8'))
         else:
             self.info = json.load(open('samplejson'))
         self.music = music
@@ -26,6 +29,16 @@ class Renderer():
             self.info = self.chart.info
         else:
             self.chart = ch.Chart(self.chartjson, self.info, self.options)
+    def parseCSV(self, file):
+        info = {}
+        with file as f:
+            reader = csv.reader(f)
+            infos = []
+            for i in reader:
+                infos.append(list(i))
+            for i in range(len(infos[0])):
+                info[infos[0][i]] = infos[1][i]
+        return {'name': info['Name'], 'level': info['Level'], 'composer': info['Artist'], 'charter': info['Charter'], 'illustration': info['Illustrator']}
     def play(self):
         global scr
         pygame.init()
@@ -50,11 +63,9 @@ class Renderer():
         pause = False
         timer = pygame.time.get_ticks() / 1000
         passed = 0
-        if self.chart.offset > 0:
-            time.sleep(self.chart.offset)
         tot = get_duration(self.music)
-        font = pygame.font.Font(util.FONT, 24)
-        fps_font = pygame.font.Font(util.FONT, 15)
+        font = util.font(24)
+        fps_font = util.font(15)
         clock = pygame.time.Clock()
         while True:
             if pause:
@@ -82,6 +93,8 @@ class Renderer():
                 if tm >= 3 or 'notrans' in self.options:
                     if not music_on:
                         pygame.mixer.music.play(1)
+                        if self.chart.offset > 0:
+                            pygame.mixer.music.set_pos(self.chart.offset)
                         music_on = True
                     tm2 = tm - 3
                     if 'notrans' in self.options:
@@ -99,7 +112,7 @@ class Renderer():
                     screen2.blit(time_text, (10, 10))
                 else:
                     name = self.info.get('name', 'Untitled')
-                    lvl = self.info.get('lvl', 'SP Lv.?')
+                    lvl = self.info.get('level', 'SP Lv.?')
                     charter = self.info.get('charter', '?')
                     composer = self.info.get('composer', '?')
                     illustration = self.info.get('illustration', '?')

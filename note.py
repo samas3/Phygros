@@ -34,7 +34,7 @@ class Note():
             self.pos = linePos
             note(screen, *linePos, self)
             '''if 'showid' in options:
-                font = pygame.font.Font(util.FONT, 20)
+                font = util.font(20)
                 id_text = font.render(str(self.id), False, (255, 255, 255))
                 screen.blit(id_text, linePos)'''   # 性能代价太大
         else:

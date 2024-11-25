@@ -1,6 +1,5 @@
-import math
+from math import *
 import pygame
-import numpy as np
 pygame.display.init()
 pygame.display.set_mode((1, 1), pygame.NOFRAME)
 w = 0
@@ -8,7 +7,9 @@ h = 0
 TEXT_COLOR = (255, 255, 255)
 LINE_COLOR = (254, 255, 169)
 HL_COLOR = (0, 127, 0)
-FONT = 'src/font.ttf'
+pygame.init()
+def font(size):
+    return pygame.font.Font('src/font.ttf', size)
 def loadRes(name, x=0, y=0):
     img = pygame.image.load(f'src/{name}.png').convert_alpha()
     if x or y:
@@ -58,9 +59,9 @@ def secToTime(bpm, time):
 def timeToSec(bpm, time):
     return time * 1.875 / bpm
 def rotate(cx, cy, x, y, deg):
-    rad = math.radians(deg)
-    sindeg = math.sin(rad)
-    cosdeg = math.cos(rad)
+    rad = radians(deg)
+    sindeg = sin(rad)
+    cosdeg = cos(rad)
     newx = cosdeg * (x - cx) - sindeg * (y - cy) + cx
     newy = sindeg * (x - cx) + cosdeg * (y - cy) + cy
     return [newx, newy]
@@ -83,13 +84,13 @@ def calcNotePos(note, yDist, fv):
     if fv == -1: # rpe
         linePos = toChartPos(note.line.x, note.line.y, 3)
     x, y = toXYUnit(note.positionX, yDist)
-    rad = math.radians(note.deg)
+    rad = radians(note.deg)
     if fv == -1:
-        rad = math.radians(-note.deg)
+        rad = radians(-note.deg)
     if not note.isAbove:
         y = -y
-    sindeg = math.sin(rad)
-    cosdeg = math.cos(rad)
+    sindeg = sin(rad)
+    cosdeg = cos(rad)
     if abs(cosdeg) < 1e-5:
         cosdeg = cosdeg / abs(cosdeg) * 1e-5
     tandeg = sindeg / cosdeg
@@ -100,3 +101,32 @@ def calcNotePos(note, yDist, fv):
 def intersect(lux1, luy1, rdx1, rdy1, lux2, luy2, rdx2, rdy2):
     # 判断前4个坐标构成的矩形是否与后4个坐标构成的矩形相交
     return abs(lux2 + rdx2 - lux1 - rdx1) <= (rdx1 - lux1 + rdx2 - lux2) and abs(luy2 + rdy2 - luy1 - rdy1) <= (rdy1 - luy1 + rdy2 - luy2)
+tween = [None, lambda x: x,
+                      lambda x: sin(x * pi / 2),
+                      lambda x: 1 - cos(x * pi / 2),
+                      lambda x: 1 - (x - 1) ** 2,
+                      lambda x: x ** 2,
+                      lambda x: (1 - cos(x * pi)) / 2,
+                      lambda x: (lambda y: y ** 2 if y < 1 else -((y - 2) ** 2 - 2) / 2)(x * 2),
+                      lambda x: 1 + (x - 1) ** 3,
+                      lambda x: x ** 3,
+                      lambda x: 1 - (x - 1) ** 4,
+                      lambda x: x ** 4,
+                      lambda x: (lambda y: y ** 3 if y < 1 else ((y - 2) ** 3 + 2) / 2)(x * 2),
+                      lambda x: (lambda y: y ** 4 if y < 1 else -((y - 2) ** 4 - 2) / 2)(x * 2),
+                      lambda x: 1 + (x - 1) ** 5,
+                      lambda x: x ** 5,
+                      lambda x: 1 - 2 ** (-10 * x),
+                      lambda x: 2 ** (10 * (x - 1)),
+                      lambda x: sqrt(1 - (x - 1) ** 2),
+                      lambda x: 1 - sqrt(1 - x ** 2),
+                      lambda x: (2.70158 * x - 1) * (x - 1) ** 2 + 1,
+                      lambda x: (2.70158 * x - 1.70158) * x ** 2,
+                      lambda x: (lambda y: 1 - sqrt(1 - y ** 2) if y < 1 else sqrt(1 - (y - 2) ** 2) + 1)(x * 2),
+                      lambda x: (14.379638 * x - 5.189819) * x ** 2 if x < 0.5 else (14.379638 * x - 9.189819) * (x - 1) ** 2 + 1,
+                      lambda x: 1 - 2 ** (-10 * x)  * cos(x * pi / 0.15),
+                      lambda x: 2 ** (10 * (x - 1)) * cos((x - 1) * pi / 0.15),
+                      lambda x: (lambda y: y ** 2 if y < 4 else ((y - 6) ** 2) + 12 if y < 8 else ((y - 9) ** 2 + 15 if y < 10 else (y - 10.5) ** 2 + 15.75))(x * 4),
+                      lambda x: 1 - tween[26](1 - x),
+                      lambda x: (lambda y: tween[26](y) / 2 if y < 1 else tween[27](x - 1) / 2 + 0.5)(x * 2),
+                      lambda x: 2 ** (20 * x - 11) * sin((160 * x + 1) * pi / 18) if x < 0.5 else 1 - 2 ** (9 - 20 * x) * sin((160 * x + 1) * pi / 18)]
