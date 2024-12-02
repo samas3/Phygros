@@ -62,6 +62,7 @@ class Line():
         for i in self.disappearEvents:
             if time > i.endTime:
                 self.disappearEvents.remove(i)
+                self.alpha = i.end
                 continue
             if time < i.startTime:
                 break
@@ -70,6 +71,8 @@ class Line():
         for i in self.moveEvents:
             if time > i.endTime:
                 self.moveEvents.remove(i)
+                self.x = i.end
+                self.y = i.end2
                 continue
             if time < i.startTime:
                 break
@@ -79,6 +82,7 @@ class Line():
         for i in self.rotateEvents:
             if time > i.endTime:
                 self.rotateEvents.remove(i)
+                self.deg = i.end
                 continue
             if time < i.startTime:
                 break

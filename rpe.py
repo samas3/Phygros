@@ -139,8 +139,6 @@ class Line:
             j['end'] = (j['end'] + 450) / 900
             self.moveYEvents.append(Event(j, self))
         self.moveYEvents.sort(key=lambda x: x.startTime)
-        for i in self.moveYEvents:
-            print(i.startTime, i.endTime, i.start, i.end)
         for i, j in enumerate(self.events['rotateEvents']):
             self.rotateEvents.append(Event(j, self))
         self.rotateEvents.sort(key=lambda x: x.startTime)
@@ -185,7 +183,6 @@ class Line:
             if time < i.startTime:
                 break
             self.y = Easing(i).getValue(time)
-            print(time, self.y)
             break
         for i in self.rotateEvents:
             if time > i.endTime:
