@@ -22,9 +22,9 @@ class Note():
         self.pos = []
         self.hit = False
         self.realTime = util.timeToSec(self.line.bpm, self.time)
+        #if 'showid' in options:
+        #    self.id_text = util.font(20).render(f'{self.line.id},{self.id}', False, (255, 0, 0))
     def render(self, screen, time, fv, options):
-        if self.scored:
-            return
         self.deg = -self.line.deg
         if 'notescale' in options:
             note.scale *= float(options['notescale'])
@@ -34,9 +34,7 @@ class Note():
             self.pos = linePos
             note(screen, *linePos, self)
             '''if 'showid' in options:
-                font = util.font(20)
-                id_text = font.render(str(self.id), False, (255, 255, 255))
-                screen.blit(id_text, linePos)'''   # 性能代价太大
+                screen.blit(self.id_text, linePos)'''
         else:
             yDist = self.floorPosition - self.line.floorPosition
             headPos = util.calcNotePos(self, max(0, yDist), fv)

@@ -34,6 +34,8 @@ def init(w_, h_):
 def eq(a, b, eps=1e-2):
     return abs(a - b) < eps
 def rng(val, a, b, x, y):
+    if a == b:
+        return x
     return (val - a) / (b - a) * (y - x) + x
 def inrng(val, a, b):
     return a <= val <= b

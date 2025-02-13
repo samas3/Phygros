@@ -98,8 +98,7 @@ class Chart():
     def render(self, time, screen, options):
         for i in self.all_notes:
             chartTime = util.secToTime(i.line.bpm, time)
-            if i.time + i.holdTime >= chartTime:
-                i.render(screen, chartTime, self.fv, options)
+            i.render(screen, chartTime, self.fv, options)
         for i in self.lines:
             i.render(time, screen, util.LINE_COLOR, self.fv, options)
         # 后渲染界面，要不然会被挡
