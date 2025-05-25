@@ -14,9 +14,7 @@ class RPE:
         self.judgeLineList = chart['judgeLineList']
         self.lineList = []
         self.parseLine()
-        self.all_notes = []
-        for i in self.lineList:
-            self.all_notes += filter(lambda x: not x.isFake, i.noteList)
+        self.all_notes = [note for line in self.lineList for note in line.noteList if not note.isFake]
         self.notes = len(self.all_notes)
         self.all_notes.sort(key=lambda x: x.endTime)
         self.highlight()

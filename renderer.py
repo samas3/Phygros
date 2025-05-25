@@ -5,12 +5,20 @@ import rpe
 import util
 import json
 import os
+import ctypes
 from tinytag import TinyTag
 from PIL import Image, ImageFilter, ImageEnhance
 def get_duration(file_path):
     tag = TinyTag.get(file_path)
     duration = tag.duration
     return duration
+class RECT(ctypes.Structure):
+    _fields_ = [
+        ("left", ctypes.c_long),
+        ("top", ctypes.c_long),
+        ("right", ctypes.c_long),
+        ("bottom", ctypes.c_long)
+    ]
 class Renderer():
     def __init__(self, chart, music, bg, info, options=''):
         if os.path.isfile(info):
@@ -29,6 +37,8 @@ class Renderer():
             self.info = self.chart.info
         else:
             self.chart = ch.Chart(self.chartjson, self.info, self.options)
+        self.no_frame = False
+        self.size = (0, 0)
     def parseCSV(self, file):
         info = {}
         with file as f:
@@ -39,12 +49,21 @@ class Renderer():
             for i in range(len(infos[0])):
                 info[infos[0][i]] = infos[1][i]
         return {'name': info['Name'], 'level': info['Level'], 'composer': info['Artist'], 'charter': info['Charter'], 'illustration': info['Illustrator']}
+    def set_pos(self, x, y):
+        hwnd = pygame.display.get_wm_info()['window']
+        ctypes.windll.user32.SetWindowPos(hwnd, 0, x, y, 0, 0, 0x0001)
+    def get_pos(self):
+        hwnd = pygame.display.get_wm_info()['window']
+        rect = RECT()
+        ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect))
+        return (rect.left, rect.top)
     def play(self):
         global scr
         pygame.init()
         rate = 2048 / 1080
         min_width = float(self.options.get('minwidth', 500))
-        screen = pygame.display.set_mode((min_width * rate, min_width))
+        self.size = (min_width * rate, min_width)
+        screen = pygame.display.set_mode(self.size)
         if self.bg:
             bgimg = Image.open(self.bg).filter(ImageFilter.GaussianBlur(radius=6))
             enhancer = ImageEnhance.Brightness(bgimg)
@@ -52,10 +71,11 @@ class Renderer():
             bg = pygame.image.fromstring(bgimg.tobytes(), bgimg.size, bgimg.mode).convert_alpha()
             width, height = bg.get_size()
             rate = width / height
-            screen = pygame.display.set_mode((min_width * rate, min_width))
-            bg = pygame.transform.scale(bg, (min_width * rate, min_width))
+            self.size = (min_width * rate, min_width)
+            screen = pygame.display.set_mode(self.size)
+            bg = pygame.transform.scale(bg, self.size)
         screen2 = screen.convert_alpha()
-        width, height = (min_width * rate, min_width)
+        width, height = self.size
         util.init(width, height)
         pygame.display.set_caption('Phygros')
         pygame.mixer.music.load(self.music)
@@ -67,6 +87,11 @@ class Renderer():
         font = util.font(24)
         fps_font = util.font(15)
         clock = pygame.time.Clock()
+
+        drag_bar = pygame.Rect((width / 2 - width / 20, 10, width / 10, 5))
+        dragging = False
+        start_mouse_pos = (0, 0)
+        start_window_pos = (0, 0)
         while True:
             if pause:
                 timer = pygame.time.get_ticks() / 1000
@@ -78,19 +103,43 @@ class Renderer():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     break
-                if event.type == pygame.KEYUP:
+                elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_ESCAPE:
                         pause = not pause
                         if pause:
                             pygame.mixer.music.pause()
                         else:
                             pygame.mixer.music.unpause()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1: 
+                        if drag_bar.collidepoint(event.pos):
+                            dragging = True
+                            start_mouse_pos = event.pos
+                            start_window_pos = self.get_pos()
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        dragging = False
+                    elif event.button == 3:
+                        pygame.quit()
+                        break
+                elif event.type == pygame.MOUSEMOTION:
+                    if dragging:
+                        current_mouse_pos = event.pos
+                        dx = current_mouse_pos[0] - start_mouse_pos[0]
+                        dy = current_mouse_pos[1] - start_mouse_pos[1]
+                        new_x = start_window_pos[0] + dx
+                        new_y = start_window_pos[1] + dy
+                        self.set_pos(new_x, new_y)
             else:
                 if self.bg:
                     screen2.blit(bg, (0, 0))
                 else:
                     screen2.fill((0, 0, 0))
                 if tm >= 3 or 'notrans' in self.options:
+                    if not self.no_frame:
+                        screen = pygame.display.set_mode(self.size, pygame.NOFRAME)
+                        self.no_frame = True
+                    pygame.draw.rect(screen2, (200, 200, 200), drag_bar)
                     if not music_on:
                         pygame.mixer.music.play(1)
                         if self.chart.offset > 0:
