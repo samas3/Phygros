@@ -1,6 +1,7 @@
 import pygame
 import util
 import sound
+SHOW_ID = False
 class Note():
     def __init__(self, noteJson, line, isAbove):
         self.type = int(noteJson['type'])
@@ -22,8 +23,10 @@ class Note():
         self.pos = []
         self.hit = False
         self.realTime = util.timeToSec(self.line.bpm, self.time)
-        #if 'showid' in options:
-        #    self.id_text = util.font(20).render(f'{self.line.id},{self.id}', False, (255, 0, 0))
+        if SHOW_ID:
+            self.id_text = util.font(20).render(f'{self.line.id},{self.id}', False, (255, 0, 0))
+    def __repr__(self):
+        return f'{[None, "Tap", "Drag", "Hold", "Flick"][self.type]}[id={self.line.id},{self.id}]'
     def render(self, screen, time, fv, options):
         self.deg = -self.line.deg
         if 'notescale' in options:
@@ -33,8 +36,8 @@ class Note():
             linePos = util.calcNotePos(self, yDist, fv)
             self.pos = linePos
             note(screen, *linePos, self)
-            '''if 'showid' in options:
-                screen.blit(self.id_text, linePos)'''
+            if SHOW_ID:
+                screen.blit(self.id_text, linePos)
         else:
             yDist = self.floorPosition - self.line.floorPosition
             headPos = util.calcNotePos(self, max(0, yDist), fv)
@@ -66,13 +69,17 @@ def hold(screen, headX, headY, endX, endY, note):
     scale = note.scale
     lux = min(headX, endX)
     luy = min(headY, endY)
-    rux = max(headX, endX)
-    ruy = max(headY, endY)
-    if not util.intersect(lux, luy, rux, ruy, 0, 0, width, height):
+    rdx = max(headX, endX)
+    rdy = max(headY, endY)
+    if not util.intersect(lux, luy, rdx, rdy, 0, 0, width, height):
         return
-    spirit, rect = util.displayRes((5 if note.hl else 1), (headX, headY), (int(0.14 * height * scale), int(0.01 * height)), -note.deg)
-    screen.blit(spirit, rect) # holdHead
-    pygame.draw.line(screen, (255, 255, 255), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody
+    s_head, r_head = util.displayRes((10 if note.hl else 9), (headX, headY), (int(0.14 * height * scale), int(0.01 * height)), -note.deg)
+    screen.blit(s_head, r_head)
+    s_body, r_body = util.displayRes((7 if note.hl else 3), ((headX + endX) / 2, (headY + endY) / 2), (int(0.14 * height * scale), abs(endY - headY)), -note.deg)
+    screen.blit(s_body, r_body)
+    s_end, r_end = util.displayRes(11, (endX, endY - int(0.005 * height * scale)), (int(0.13 * height * scale), int(0.01 * height)), -note.deg)
+    screen.blit(s_end, r_end)
+    #pygame.draw.line(screen, (255, 255, 255), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody
 def hit(screen, x, y, deg, type, options):
     scr = pygame.Surface((20, 20), pygame.SRCALPHA)
     scr.fill(util.LINE_COLOR)

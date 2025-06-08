@@ -58,27 +58,29 @@ class Renderer():
         ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect))
         return (rect.left, rect.top)
     def play(self):
-        global scr
         pygame.init()
         rate = 2048 / 1080
         min_width = float(self.options.get('minwidth', 500))
         self.size = (min_width * rate, min_width)
-        screen = pygame.display.set_mode(self.size)
+        screen = pygame.display.set_mode(self.size, pygame.SHOWN, vsync=1)
         if self.bg:
-            bgimg = Image.open(self.bg).filter(ImageFilter.GaussianBlur(radius=6))
-            enhancer = ImageEnhance.Brightness(bgimg)
-            bgimg = enhancer.enhance(0.5)
-            bg = pygame.image.fromstring(bgimg.tobytes(), bgimg.size, bgimg.mode).convert_alpha()
-            width, height = bg.get_size()
-            rate = width / height
-            self.size = (min_width * rate, min_width)
-            screen = pygame.display.set_mode(self.size)
-            bg = pygame.transform.scale(bg, self.size)
-        screen2 = screen.convert_alpha()
+            with Image.open(self.bg) as bgimg:
+                bgimg = bgimg.filter(ImageFilter.GaussianBlur(radius=6))
+                enhancer = ImageEnhance.Brightness(bgimg)
+                bgimg = enhancer.enhance(0.5)
+                bg = pygame.image.fromstring(bgimg.tobytes(), bgimg.size, bgimg.mode)
+                width, height = bg.get_size()
+                rate = width / height
+                self.size = (min_width * rate, min_width)
+                screen = pygame.display.set_mode(self.size)
+                bg = pygame.transform.scale(bg, self.size)
+        screen2 = pygame.Surface(self.size)
         width, height = self.size
         util.init(width, height)
         pygame.display.set_caption('Phygros')
+        pygame.mixer.pre_init(44100, 16, 2, 4096)
         pygame.mixer.music.load(self.music)
+        pygame.event.set_allowed([pygame.QUIT, pygame.KEYUP, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
         music_on = False
         pause = False
         timer = pygame.time.get_ticks() / 1000
@@ -87,12 +89,12 @@ class Renderer():
         font = util.font(24)
         fps_font = util.font(15)
         clock = pygame.time.Clock()
-
         drag_bar = pygame.Rect((width / 2 - width / 20, 10, width / 10, 5))
         dragging = False
         start_mouse_pos = (0, 0)
         start_window_pos = (0, 0)
-        while True:
+        running = True
+        while running:
             if pause:
                 timer = pygame.time.get_ticks() / 1000
                 passed = tm
@@ -104,7 +106,7 @@ class Renderer():
                     pygame.quit()
                     break
                 elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_ESCAPE:
+                    if event.key == pygame.K_SPACE:
                         pause = not pause
                         if pause:
                             pygame.mixer.music.pause()
@@ -139,7 +141,7 @@ class Renderer():
                     if not self.no_frame:
                         screen = pygame.display.set_mode(self.size, pygame.NOFRAME)
                         self.no_frame = True
-                    pygame.draw.rect(screen2, (200, 200, 200), drag_bar)
+                    pygame.draw.rect(screen2, (200, 200, 200, 128), drag_bar)
                     if not music_on:
                         pygame.mixer.music.play(1)
                         if self.chart.offset > 0:
@@ -155,7 +157,8 @@ class Renderer():
                     screen2.blit(fps_text, (width - fps_text.get_width() - 10, height / 2 - fps_text.get_height() / 2))
                     time_text = font.render(util.ftime(min(tm2, tot)) + '/' + util.ftime(tot) + (' (PAUSED)' if pause else ''), False, util.TEXT_COLOR)
                     if tm2 > tot + 3:
-                        pygame.quit()
+                        #pygame.quit()
+                        running = False
                         break
                     pygame.draw.line(screen2, (127, 127, 127, 127), (0, 0), (pygame.mixer.music.get_pos() / 1000 / tot * width, 0), int(0.02 * height))
                     screen2.blit(time_text, (10, 10))
@@ -176,11 +179,13 @@ class Renderer():
                     screen2.blit(composer_text, (width / 2 - composer_text.get_width() / 2, height / 2 + 55))
                     screen2.blit(illustration_text, (width / 2 - illustration_text.get_width() / 2, height / 2 + 95))
                     pygame.draw.line(screen2, util.LINE_COLOR, (width / 2 * (1 - tm2 / 3), height / 2), (width / 2 * (1 + tm2 / 3), height / 2), int(0.0075 * height))
+                    pass
                 screen.blit(screen2, (0, 0))
                 pygame.display.flip()
                 clock.tick(float(self.options['maxfps']) if 'maxfps' in self.options else 60)
                 continue
             break
 if __name__ == '__main__':
+
     name = '1'
     Renderer(f'{name}.json', f'{name}.wav', f'{name}.png', '', 'notrans').play()

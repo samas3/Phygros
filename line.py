@@ -1,7 +1,7 @@
 import pygame
 import note
 import util
-class Line():
+class Line:
     def __init__(self, lineJson, id=0):
         self.bpm = float(lineJson['bpm'])
         self.notesAboveNoHold = []
@@ -47,6 +47,8 @@ class Line():
         self.alpha = 0
         self.id = id
         self.floorPosition = 0
+    def __repr__(self):
+        return f'JudgeLine[id={self.id}, Notes={len(self.notesAbove) + len(self.notesBelow)}, BPM={self.bpm}, Events={len(self.speedEvents) + len(self.disappearEvents) + len(self.moveEvents) + len(self.rotateEvents)}]'
     def notes(self):
         return len(self.notesAbove) + len(self.notesBelow)
     def render(self, time, screen, color, fv, options):
@@ -101,7 +103,7 @@ class Line():
         if 'mirror' in options:
             left = (width - left[0], left[1])
             right = (width - right[0], right[1])
-        alpha = int(self.alpha * 255) & 255
+        alpha = util.clamp(self.alpha, 0, 1) * 255
         color = (*color, alpha)
         font = util.font(20)
         if 'showid' in options:
@@ -120,24 +122,26 @@ class Line():
             screen.blit(lineInfo, (10, 110))
         if alpha > 0:
             pygame.draw.line(screen, color, left, right, int(0.0075 * height))
-class SpeedEvent():
+class Event:
     def __init__(self, evtJson):
         self.startTime = int(evtJson['startTime'])
         self.endTime = int(evtJson['endTime'])
-        self.value = float(evtJson['value'])
+    def __repr__(self):
+        return '{}[Time={:.2f}-{:.2f}]'.format(self.__class__.__name__, self.startTime, self.endTime)
     def __lt__(self, other):
         return self.startTime < other.startTime
-class LineEvent():
+class SpeedEvent(Event):
     def __init__(self, evtJson):
-        self.startTime = int(evtJson['startTime'])
-        self.endTime = int(evtJson['endTime'])
+        super().__init__(evtJson)
+        self.value = float(evtJson['value'])
+class LineEvent(Event):
+    def __init__(self, evtJson):
+        super().__init__(evtJson)
         self.start = float(evtJson['start'])
         self.end = float(evtJson['end'])
         if 'start2' in evtJson:
             self.start2 = float(evtJson['start2'])
             self.end2 = float(evtJson['end2'])
-    def __lt__(self, other):
-        return self.startTime < other.startTime
     def toFV3(self):
         if 'start2' in self.__dict__:
             return

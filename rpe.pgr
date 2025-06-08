@@ -1,16 +1,14 @@
 import util
 import pygame
 import sound
-import gc
 from math import *
 from scipy.optimize import bisect
-DEBUG = False
+DEBUG = True
 LINE_ID = 63
 DEBUG_NOTE = False
 class RPE:
-    BPMlist = None
     def __init__(self, chart):
-        RPE.BPMlist = BPMList(chart['BPMList'])
+        self.BPMList = BPMList(chart['BPMList'])
         self.meta = chart['META']
         self.info = {k: self.meta[k] for k in self.meta if k in ['name', 'level', 'charter', 'composer', 'illustration']}
         self.offset = self.meta['offset'] / 1000
@@ -40,9 +38,10 @@ class RPE:
         for i in hl:
             i.hl = True
     def render(self, time, screen, options):
-        notelist = filter(lambda x: time <= RPE.BPMlist.beat2sec(x.endTime, x.line.bpmfactor), self.all_notes)
-        for i in notelist:
-            i.render(time, screen)
+        for i in self.all_notes:
+            chartTime = util.secToTime(i.line.bpm, time)
+            if i.endTime >= chartTime:
+                i.render(chartTime, screen)
         for i in self.lines:
             i.render(time, screen)
         font = util.font(20)
@@ -68,6 +67,7 @@ class Line:
     def __init__(self, line, chart, id):
         self.chart = chart
         self.id = id
+        self.bpm = self.chart.BPMList.baseBPM
         #self.anchor = line['anchor']
         self.eventLayers = line['eventLayers']
         self.events = self.eventLayers[0]
@@ -75,7 +75,7 @@ class Line:
             if i == 0 or not j:
                 continue
             for k, l in j.items():
-                self.events[k] += l
+                self.events[k] += l # fuck eventLayers
         #self.extended = line['extended']
         self.notes = line.get('notes', [])
         self.noteList = []
@@ -113,8 +113,9 @@ class Line:
         for i in speedEvents:
             events.append({'time': i.startTime, 'value': i.start})
             if i.startTime != i.endTime and i.start != i.end:
+                t1 = (i.end - i.start) / (i.endTime - i.startTime)
                 for j in range(int(i.startTime), int(i.endTime)):
-                    events.append({'time': j + 1, 'value': Easing(i).getValue(j + 1)})
+                    events.append({'time': j + 1, 'value': i.start + t1 * (j + 1 - i.startTime)})
             if i.start == i.end:
                 events.append({'time': i.endTime, 'value': i.end})
         self.speedEvents = sorted(events, key=lambda x: x['time'])
@@ -129,7 +130,7 @@ class Line:
                 continue
             val = j['value'] * 11 / 45
             pos = floorPos
-            floorPos += RPE.BPMlist.beat2sec((end - start), self.bpmfactor) * val
+            floorPos += util.timeToSec(self.bpm, (end - start) * val)
             events.append({'startTime': start, 'endTime': end, 'value': val, 'floorPosition': pos})
         self.speedEvents = events
         self.speedEvents.sort(key=lambda x: x['startTime'])
@@ -150,7 +151,7 @@ class Line:
             self.alphaEvents.append(Event(j, self))
         self.alphaEvents.sort(key=lambda x: x.startTime)
     def render(self, time, screen):
-        time = RPE.BPMlist.sec2beat(time, self.bpmfactor)
+        time = util.secToTime(self.bpm, time)
         for i in self.noteList:
             i.render(time, screen)
         for i in self.speedEvents:
@@ -159,7 +160,7 @@ class Line:
                 continue
             if time < i['startTime']:
                 break
-            self.floorPosition = i['floorPosition'] + i['value'] * RPE.BPMlist.beat2sec(time - i['startTime'], self.bpmfactor)
+            self.floorPosition = i['floorPosition'] + i['value'] * util.timeToSec(self.bpm, time - i['startTime'])
             break
         for i in self.alphaEvents:
             if time > i.endTime:
@@ -207,10 +208,7 @@ class Line:
         left = util.rotate(*originalPos, *pos, deg)
         pos[0] += 5.76 * height
         right = util.rotate(*originalPos, *pos, deg)
-        self.alpha = int(self.alpha) & 255
-        alpha = self.alpha
-        if alpha <= 0:
-            return
+        alpha = util.clamp(self.alpha, 0, 255)
         color = (*util.LINE_COLOR, alpha)
         if alpha > 0:
             pygame.draw.line(screen, color, left, right, int(0.0075 * height))
@@ -294,8 +292,8 @@ class Event:
         self.easingType = event.get('easingType', 1)
         self.start = event['start']
         self.end = event['end']
-        self.startTime = toBeat(event['startTime'])
-        self.endTime = toBeat(event['endTime'])
+        self.startTime = line.chart.BPMList.calc(toBeat(event['startTime']), line.bpmfactor)
+        self.endTime = line.chart.BPMList.calc(toBeat(event['endTime']), line.bpmfactor)
     def __repr__(self):
         return 'Event[Time={:.2f}-{:.2f}]'.format(self.startTime, self.endTime)
 class Note:
@@ -304,8 +302,8 @@ class Note:
         self.id = id
         self.isAbove = (note['above'] == 1) # != 2?
         self.alpha = util.clamp(note['alpha'], 0, 255)
-        self.endTime = toBeat(note['endTime'])
-        self.startTime = toBeat(note['startTime'])
+        self.endTime = line.chart.BPMList.calc(toBeat(note['endTime']), line.bpmfactor)
+        self.startTime = line.chart.BPMList.calc(toBeat(note['startTime']), line.bpmfactor)
         self.isFake = (note['isFake'] == 1)
         self.positionX = note['positionX'] / 75.375
         self.size = note['size']
@@ -314,7 +312,7 @@ class Note:
         self.visibleTime = note['visibleTime']
         self.addFloorPosition()
         self.scored = False
-        self.realTime = RPE.BPMlist.beat2sec(self.startTime, line.bpmfactor)
+        self.realTime = util.timeToSec(self.line.bpm, self.startTime)
         self.hl = False
         self.hit = False
         if DEBUG_NOTE:
@@ -333,14 +331,14 @@ class Note:
             v1 = i['floorPosition']
             v2 = i['value']
             v3 = self.startTime - i['startTime']
-        self.floorPosition = v1 + v2 * RPE.BPMlist.beat2sec(v3, self.line.bpmfactor)
+        self.floorPosition = v1 + v2 * v3 / self.line.bpm * 1.875
         if self.type == 3:
             self.speed *= v2
     def render(self, time, screen):
-        realTime = RPE.BPMlist.sec2beat(time, self.line.bpmfactor)
+        realTime = util.timeToSec(self.line.bpm, time)
         if self.scored or self.line.alpha < 0:
             return
-        if self.realTime - realTime > self.visibleTime or realTime - RPE.BPMlist.sec2beat(self.endTime, self.line.bpmfactor) > self.visibleTime:
+        if self.realTime - realTime > self.visibleTime or realTime - util.timeToSec(self.line.bpm, self.endTime) > self.visibleTime:
             return
         self.deg = -self.line.deg
         yDist = self.floorPosition - self.line.floorPosition
@@ -354,9 +352,9 @@ class Note:
         else:
             headPos = util.calcNotePos(self, max(0, yDist), -1)
             if time <= self.startTime:
-                yDistEnd = yDist + self.speed * RPE.BPMlist.beat2sec(self.endTime - self.startTime, self.line.bpmfactor)
+                yDistEnd = yDist + self.speed * util.timeToSec(self.line.bpm, self.endTime - self.startTime)
             elif self.startTime < time <= self.endTime:
-                yDistEnd = self.speed * RPE.BPMlist.beat2sec(self.endTime - time, self.line.bpmfactor)
+                yDistEnd = self.speed * util.timeToSec(self.line.bpm, self.endTime - time)
             else:
                 yDistEnd = 0
             endPos = util.calcNotePos(self, yDistEnd, -1)
@@ -379,68 +377,39 @@ class Note:
         width, height = screen.get_size()
         lux = min(headX, endX)
         luy = min(headY, endY)
-        rdx = max(headX, endX)
-        rdy = max(headY, endY)
-        if not util.intersect(lux, luy, rdx, rdy, 0, 0, width, height):
+        rux = max(headX, endX)
+        ruy = max(headY, endY)
+        if not util.intersect(lux, luy, rux, ruy, 0, 0, width, height):
             return
-        '''s_head, r_head = util.displayRes((10 if self.hl else 9), (headX, headY), (int(0.14 * height), int(0.01 * height)), self.deg, self.alpha)
-        screen.blit(s_head, r_head)
-        s_body, r_body = util.displayRes((7 if self.hl else 3), ((headX + endX) / 2, (headY + endY) / 2), (int(0.14 * height), abs(endY - headY)), self.deg, self.alpha)
-        screen.blit(s_body, r_body)
-        s_end, r_end = util.displayRes(11, (endX, endY - int(0.005 * height)), (int(0.13 * height), int(0.01 * height)), self.deg, self.alpha)
-        screen.blit(s_end, r_end)'''
         spirit, rect = util.displayRes((5 if self.hl else 1), (headX, headY), (int(0.14 * height * self.size), int(0.01 * height)), self.deg, self.alpha)
         screen.blit(spirit, rect) # holdHead
         pygame.draw.line(screen, (255, 255, 255, self.alpha), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody
 class BPMList:
-    _bpm_cache = {}
     def __init__(self, bpmlist):
+        self.baseBPM = bpmlist[0]['bpm']
         self.list = []
+        self.acctime = 0
         self.parse(bpmlist)
     def parse(self, bpmlist):
-        for i in bpmlist:
-            i['startTime'] = max(0, toBeat(i['startTime']))
-            i['invbpm'] = 60 / i['bpm']
-            self.list.append(i)
-    def sec2beat(self, t, bpmfactor):
-        beat = 0
-        for i, e in enumerate(self.list):
-            if (e['invbpm'], bpmfactor) in BPMList._bpm_cache:
-                invbpmv = BPMList._bpm_cache[(e['invbpm'], bpmfactor)]
+        for i, j in enumerate(bpmlist):
+            value = self.acctime
+            j['startTime'] = max(0, toBeat(j['startTime']))
+            if i == len(bpmlist) - 1:
+                j['endTime'] = 1e9
             else:
-                invbpmv = e['invbpm'] * bpmfactor
-                BPMList._bpm_cache[(e['invbpm'], bpmfactor)] = invbpmv
-            if i != len(self.list) - 1:
-                et_beat = self.list[i + 1]['startTime'] - e['startTime']
-                et_sec = et_beat * invbpmv
-                if t >= et_sec:
-                    beat += et_beat
-                    t -= et_sec
-                else:
-                    beat += t / invbpmv
-                    break
-            else:
-                beat += t / invbpmv
-        return beat
-    def beat2sec(self, t, bpmfactor):
-        sec = 0
-        for i, e in enumerate(self.list):
-            if (e['invbpm'], bpmfactor) in BPMList._bpm_cache:
-                invbpmv = BPMList._bpm_cache[(e['invbpm'], bpmfactor)]
-            else:
-                invbpmv = e['invbpm'] * bpmfactor
-                BPMList._bpm_cache[(e['invbpm'], bpmfactor)] = invbpmv
-            if i != len(self.list) - 1:
-                et_beat = self.list[i + 1]['startTime'] - e['startTime']
-                if t >= et_beat:
-                    sec += et_beat * invbpmv
-                    t -= et_beat
-                else:
-                    sec += t * invbpmv
-                    break
-            else:
-                sec += t * invbpmv
-        return sec
+                j['endTime'] = toBeat(bpmlist[i + 1]['startTime'])
+            j['value'] = value
+            self.acctime += (j['endTime'] - j['startTime']) / j['bpm']
+            self.list.append(j)
+    def calc(self, beat):
+        pgr = 0
+        for i in self.list:
+            if beat > i['endTime']:
+                continue
+            if beat < i['startTime']:
+                break
+            pgr = round(((beat - i['startTime']) / i['bpm'] + i['value']) * self.baseBPM * 32)
+        return pgr
 def toBeat(beat):
     return beat[0] + beat[1] / beat[2]
 class RPEJudgeManager():
@@ -450,16 +419,16 @@ class RPEJudgeManager():
     def check(self, time, screen):
         if not self.note_list:
             return
-        for i in self.note_list:
-            beat = RPE.BPMlist.sec2beat(time, i.line.bpmfactor)
-            if i.endTime <= beat:
-                self.combo += 1
-                if i.type != 3:
-                    hit(screen, *i.pos, i.deg, i.type)
-                i.scored = 1
-                self.note_list.remove(i)
-                if not self.note_list:
-                    return
+        time = util.secToTime(self.note_list[0].line.bpm, time)
+        while self.note_list[0].endTime <= time:
+            self.combo += 1
+            n = self.note_list[0]
+            if n.type != 3:
+                hit(screen, *n.pos, n.deg, n.type)
+            n.scored = 1
+            self.note_list.pop(0)
+            if not self.note_list:
+                return
 def hit(screen, x, y, deg, type):
     scr = pygame.Surface((20, 20), pygame.SRCALPHA)
     scr.fill(util.LINE_COLOR)

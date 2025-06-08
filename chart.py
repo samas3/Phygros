@@ -1,8 +1,7 @@
 import line
 import util
-import pygame
 import judge
-class Chart():
+class Chart:
     def __init__(self, chart, info={}, options={}):
         self.options = options
         self.fv = int(chart['formatVersion'])
@@ -20,13 +19,15 @@ class Chart():
                 else:
                     i.speedEvents[j].floorPosition = i.speedEvents[j - 1].floorPosition + i.speedEvents[j - 1].value * util.timeToSec(i.bpm, k.startTime - i.speedEvents[j - 1].startTime)
         self.all_notes.sort(key=lambda x: x.time + x.holdTime)
+        self.notes = len(self.all_notes)
         self.jm = judge.JudgeManager(self.all_notes, self.options)
         self.check_line()
         if 'nohl' not in options:
             self.highlight()
         self.name = info.get('name', 'Untitled')
         self.lvl = info.get('level', 'SP Lv.?')
-        self.numOfNotes = self.notes()
+    def __repr__(self):
+        return f'Phigros Chart[Notes={self.notes}, Lines={len(self.lines)}]'
     def print(self, str):
         if 'printlog' in self.options:
             print(str)
@@ -77,12 +78,6 @@ class Chart():
                 flag = 0
         if flag:
             self.print('OK')
-    def notes(self):
-        cnt = 0
-        for i in self.lines:
-            cnt += i.notes()
-        self.notes = cnt
-        return self.notes
     def highlight(self):
         notes = sorted(self.all_notes, key=lambda x: x.realTime)
         hl = []
