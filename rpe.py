@@ -383,12 +383,8 @@ class Note:
         rdy = max(headY, endY)
         if not util.intersect(lux, luy, rdx, rdy, 0, 0, width, height):
             return
-        '''s_head, r_head = util.displayRes((10 if self.hl else 9), (headX, headY), (int(0.14 * height), int(0.01 * height)), self.deg, self.alpha)
-        screen.blit(s_head, r_head)
-        s_body, r_body = util.displayRes((7 if self.hl else 3), ((headX + endX) / 2, (headY + endY) / 2), (int(0.14 * height), abs(endY - headY)), self.deg, self.alpha)
-        screen.blit(s_body, r_body)
-        s_end, r_end = util.displayRes(11, (endX, endY - int(0.005 * height)), (int(0.13 * height), int(0.01 * height)), self.deg, self.alpha)
-        screen.blit(s_end, r_end)'''
+        #s, r = util.drawHold(headX, headY, endX, endY, self.hl, self.deg, self.alpha)
+        #screen.blit(s, r)
         spirit, rect = util.displayRes((5 if self.hl else 1), (headX, headY), (int(0.14 * height * self.size), int(0.01 * height)), self.deg, self.alpha)
         screen.blit(spirit, rect) # holdHead
         pygame.draw.line(screen, (255, 255, 255, self.alpha), (headX, headY), (endX, endY), int(0.01 * height)) # holdBody

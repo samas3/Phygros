@@ -28,6 +28,21 @@ def displayRes(id, pos, size, deg, alpha=255, color=None):
     rect = img.get_rect()
     rect.center = pos
     return [img, rect]
+def drawHold(headX, headY, endX, endY, hl, deg, alpha=255):
+    width = int(0.14 * h)
+    headHeight = int(0.01 * h)
+    height = int(((endY - headY) ** 2 + (endX - headX) ** 2) ** 0.5) + 2 * headHeight
+    surface = pygame.Surface((width, height))
+    s_head, r_head = displayRes((10 if hl else 9), (int(width / 2), int(height - headHeight / 2)), (width, headHeight), 0, alpha)
+    surface.blit(s_head, r_head)
+    s_body, r_body = displayRes((7 if hl else 3), (int(width / 2), int(height / 2)), (width, height - 2 * headHeight), 0, alpha)
+    surface.blit(s_body, r_body)
+    s_end, r_end = displayRes(11, (int(width / 2), int(headHeight / 2)), (int(0.13 * h), headHeight), 0, alpha)
+    surface.blit(s_end, r_end)
+    surface = pygame.transform.rotate(surface, deg)
+    rect = surface.get_rect()
+    rect.center = (int((headX + endX) / 2), int((headY + endY) / 2))
+    return [surface, rect]
 def init(w_, h_):
     global w, h
     w = w_
